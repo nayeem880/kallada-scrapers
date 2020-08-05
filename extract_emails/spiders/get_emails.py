@@ -28,7 +28,7 @@ class GetEmailsSpider(scrapy.Spider):
     }
     dom_detailer_api_key = '5SUT34180BBFG'
 
-    def __init__(self, input_file=''):
+    def __init__(self, *args, **kwargs):
         self.urls = []
         self.email_addresses = []
 
