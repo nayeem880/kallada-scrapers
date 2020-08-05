@@ -34,11 +34,11 @@ class GetEmailsSpider(scrapy.Spider):
 
         # Read the input CSV file & fillup the self.urls list
         # csv_files = ['technology.csv', 'softwarereview.csv', 'dogtraining.csv', 'fitnesstips.csv']
-        # csv_data = pd.read_csv('technology.csv')
+        csv_data = pd.read_csv('./extract_emails/technology.csv')
         # csv_data = pd.read_csv('softwarereview.csv')
         # csv_data = pd.read_csv('dogtraining.csv')
         # csv_data = pd.read_csv('fitnesstips.csv')
-        csv_data = pd.read_csv('pets.csv')
+        # csv_data = pd.read_csv('pets.csv')
         # csv_data = pd.read_csv(input_file)
         # for csv_file in csv_files:
         #     csv_data = pd.read_csv(csv_file)
