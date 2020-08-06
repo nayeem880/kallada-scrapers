@@ -27,12 +27,14 @@ python-dateutil==2.8.1
 pytz==2020.1
 queuelib==1.5.0
 requests==2.24.0
+requests-file==1.5.1
 Scrapy==2.2.1
 scrapy-crawlera==1.7.0
 scrapyd==1.2.1
 scrapyd-client==1.2.0a1
 service-identity==18.1.0
 six==1.15.0
+tldextract==2.2.3
 Twisted==20.3.0
 urllib3==1.25.10
 w3lib==1.22.0
