@@ -116,3 +116,7 @@ DOWNLOAD_MAXSIZE = 5592405
 # SCHEDULER_DISK_QUEUE = 'scrapy.squeues.PickleFifoDiskQueue'
 # SCHEDULER_MEMORY_QUEUE = 'scrapy.squeues.FifoMemoryQueue'
 DOWNLOAD_FAIL_ON_DATALOSS = False
+
+
+# Limit ITEMS to Debug
+# CLOSESPIDER_ITEMCOUNT = 60
