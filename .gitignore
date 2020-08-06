@@ -140,6 +140,9 @@ cython_debug/
 # PDF
 *.pdf
 
+# CSV
+*.csv
+
 # VSCODE
 .vscode/
 

@@ -1,8 +1,10 @@
-from urllib.parse import quote
-
+# import datetime
+import os
 import scrapy
-from scrapy.http import Request
 import tldextract
+
+from scrapy.http import Request
+from urllib.parse import quote
 
 
 class GuestpostscraperSpider(scrapy.Spider):
@@ -20,6 +22,18 @@ class GuestpostscraperSpider(scrapy.Spider):
                           'intitle:"Submission guidelines"']
 
     write_for_us_url = ''
+
+    custom_settings = {
+        'FEEDS': {
+            'guestpostscraper.csv' : {
+                'format': 'csv',
+                'encoding': 'utf-8'
+            }
+        },
+        'FEED_EXPORTERS': {
+            'csv': 'scrapy.exporters.CsvItemExporter',
+        },
+    }
 
     def start_requests(self):
         for seed_keyword in self.seed_keywords.split(','):

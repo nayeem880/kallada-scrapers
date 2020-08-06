@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+# import datetime
 import json
+import os
 import pandas as pd
 import PyPDF2
 import re
@@ -27,21 +29,26 @@ class GetEmailsSpider(scrapy.Spider):
         'accept-language': 'en-US,en;q=0.9',
     }
     dom_detailer_api_key = '5SUT34180BBFG'
+    # output_filename = f'get_emails_{datetime.datetime.today().strftime("%Y%m%d_%H%M%S")}.csv'
+    # os.remove('get_emails.csv')
+    custom_settings = {
+        'FEEDS': {
+            'get_emails.csv' : {
+                'format': 'csv',
+                'encoding': 'utf-8'
+            }
+        },
+        'FEED_EXPORTERS': {
+            'csv': 'scrapy.exporters.CsvItemExporter',
+        },
+    }
 
     def __init__(self, *args, **kwargs):
         self.urls = []
         self.email_addresses = []
 
         # Read the input CSV file & fillup the self.urls list
-        # csv_files = ['technology.csv', 'softwarereview.csv', 'dogtraining.csv', 'fitnesstips.csv']
-        csv_data = pd.read_csv('./extract_emails/technology.csv')
-        # csv_data = pd.read_csv('softwarereview.csv')
-        # csv_data = pd.read_csv('dogtraining.csv')
-        # csv_data = pd.read_csv('fitnesstips.csv')
-        # csv_data = pd.read_csv('pets.csv')
-        # csv_data = pd.read_csv(input_file)
-        # for csv_file in csv_files:
-        #     csv_data = pd.read_csv(csv_file)
+        csv_data = pd.read_csv('guestpostscraper.csv')
         for url in csv_data['website_url']:
             self.urls.append(url.strip())
         
