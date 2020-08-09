@@ -49,6 +49,7 @@ class GetEmailsSpider(scrapy.Spider):
 
         # Read the input CSV file & fillup the self.urls list
         csv_data = pd.read_csv('guestpostscraper.csv')
+        self.url_category = csv_data['category'][0]
         for url in csv_data['website_url']:
             self.urls.append(url.strip())
         
@@ -268,6 +269,7 @@ class GetEmailsSpider(scrapy.Spider):
         yield {
             'website': response.meta['domain'],
             'url': response.meta['url'],
+            'category': self.url_category,
             'email': response.meta['email'],
             'da': json_data['mozDA'] if json_data.get('mozDA') else 'NA',
             'pa': json_data['mozPA'] if json_data.get('mozPA') else 'NA',

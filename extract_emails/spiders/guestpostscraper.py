@@ -50,11 +50,19 @@ class GuestpostscraperSpider(scrapy.Spider):
                 self.start_urls.append(i)
 
             for url in self.start_urls:
-                item = {'start_url': url}
+                item = {
+                    'start_url': url,
+                    'category': seed_keyword.replace(' ', '_')
+                }
+                print(item)
                 request = Request(url, dont_filter=True)
                 # set the meta['item'] to use the item in the next call back
                 request.meta['item'] = item
-                yield request
+                try:
+                    yield request
+                except Exception as e:
+                    print('---------------------- ERROR ----------------------')
+                    print(e)
 
     def parse(self, response):
         results = response.xpath('//*[@id="rso"]/div[*]/div/div[1]/a/@href').extract()
@@ -69,7 +77,8 @@ class GuestpostscraperSpider(scrapy.Spider):
                 self.domains_scraped.append(ext.domain)
                 yield {
                     "website_url": r,
-                    "base_url": response.meta['item']['start_url']
+                    "base_url": response.meta['item']['start_url'],
+                    "category": response.meta['item'].get('category') or 'None'
                 }
 
         if next_page != []:
