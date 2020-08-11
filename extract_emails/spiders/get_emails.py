@@ -283,10 +283,10 @@ class GetEmailsSpider(scrapy.Spider):
             'url': response.meta['url'],
             'category': response.meta['category'],
             'email': response.meta['email'],
-            'da': json_data['mozDA'] if json_data.get('mozDA') else 'NA',
-            'pa': json_data['mozPA'] if json_data.get('mozPA') else 'NA',
-            'cf': json_data['majesticCF'] if json_data.get('majesticCF') else 'NA',
-            'tf': json_data['majesticTF'] if json_data.get('majesticTF') else 'NA'
+            'da': json_data['mozDA'] if 'mozDA' in json_data else 'NA',
+            'pa': json_data['mozPA'] if 'mozPA' in json_data else 'NA',
+            'cf': json_data['majesticCF'] if 'majesticCF' in json_data else 'NA',
+            'tf': json_data['majesticTF'] if 'majesticTF' in json_data else 'NA'
         }
 
     # def _filter_emails(self, emails):
