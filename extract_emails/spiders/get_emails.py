@@ -29,8 +29,6 @@ class GetEmailsSpider(scrapy.Spider):
         'accept-language': 'en-US,en;q=0.9',
     }
     dom_detailer_api_key = '5SUT34180BBFG'
-    # output_filename = f'get_emails_{datetime.datetime.today().strftime("%Y%m%d_%H%M%S")}.csv'
-    # os.remove('get_emails.csv')
     custom_settings = {
         'FEEDS': {
             'get_emails.csv' : {
@@ -49,9 +47,13 @@ class GetEmailsSpider(scrapy.Spider):
 
         # Read the input CSV file & fillup the self.urls list
         csv_data = pd.read_csv('guestpostscraper.csv')
-        self.url_category = csv_data['category'][0]
-        for url in csv_data['website_url']:
-            self.urls.append(url.strip())
+        for website_url, category in csv_data[['website_url', 'category']].values:
+            self.urls.append(
+                {
+                    'url': website_url.strip(),
+                    'category': category.strip()
+                }
+            )
         
         # Open an HTTP session for google.com and set cookies
         self.session = requests.Session()
@@ -70,8 +72,13 @@ class GetEmailsSpider(scrapy.Spider):
     def start_requests(self):
         # Access each URL in the self.urls list
         for url in self.urls:
-            domain = url.split('/')[2].replace('www.', '')
-            yield Request(url, callback=self.parse, headers=self.headers, meta={'dont_proxy': True, 'domain': domain})
+            domain = url['url'].split('/')[2].replace('www.', '')
+            yield Request(
+                url['url'],
+                callback=self.parse,
+                headers=self.headers,
+                meta={'dont_proxy': True, 'domain': domain, 'category': url['category']}
+            )
 
     def parse(self, response):
         try:
@@ -128,6 +135,7 @@ class GetEmailsSpider(scrapy.Spider):
                 meta={
                     'dont_proxy': True,
                     'url': response.url,
+                    'category': response.meta['category'],
                     'domain': domain,
                     'email': unique_emails[0] if unique_emails else 'NA',
                 }
@@ -143,6 +151,7 @@ class GetEmailsSpider(scrapy.Spider):
                 meta={
                     'dont_proxy': True,
                     'url': response.url,
+                    'category': response.meta['category'],
                     'domain': domain,
                 }
             )
@@ -161,6 +170,7 @@ class GetEmailsSpider(scrapy.Spider):
                     dont_filter=True,
                     meta={
                         'url': response.url,
+                        'category': response.meta['category'],
                         'domain': domain,
                     }
                 )
@@ -205,6 +215,7 @@ class GetEmailsSpider(scrapy.Spider):
                 meta={
                     'dont_proxy': True,
                     'url': response.meta['url'],
+                    'category': response.meta['category'],
                     'domain': response.meta['domain'],
                     'email': unique_emails[0] if unique_emails else 'NA',
                 }
@@ -252,6 +263,7 @@ class GetEmailsSpider(scrapy.Spider):
             meta={
                 'dont_proxy': True,
                 'url': response.meta['url'],
+                'category': response.meta['category'],
                 'domain': response.meta['domain'],
                 'email': unique_emails[0] if unique_emails else 'NA',
             }
@@ -269,7 +281,7 @@ class GetEmailsSpider(scrapy.Spider):
         yield {
             'website': response.meta['domain'],
             'url': response.meta['url'],
-            'category': self.url_category,
+            'category': response.meta['category'],
             'email': response.meta['email'],
             'da': json_data['mozDA'] if json_data.get('mozDA') else 'NA',
             'pa': json_data['mozPA'] if json_data.get('mozPA') else 'NA',

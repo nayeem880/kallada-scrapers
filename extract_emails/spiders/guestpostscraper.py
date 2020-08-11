@@ -52,7 +52,7 @@ class GuestpostscraperSpider(scrapy.Spider):
             for url in self.start_urls:
                 item = {
                     'start_url': url,
-                    'category': seed_keyword.replace(' ', '_')
+                    'category': seed_keyword.strip().replace(' ', '_')
                 }
                 print(item)
                 request = Request(url, dont_filter=True)
@@ -84,7 +84,11 @@ class GuestpostscraperSpider(scrapy.Spider):
         if next_page != []:
             absolute_nextpageurl = "https://www.google.com" + next_page[0]
             r = Request(absolute_nextpageurl)
-            item = {'start_url': response.meta['item']['start_url']}
+            item = {
+                'start_url': response.meta['item']['start_url'],
+                'category': response.meta['item'].get('category') or 'None'
+            }
+            print(item)
             r.meta['item'] = item
             if response.meta['item']['start_url'] == self.write_for_us_url:
                 if "start=100" not in next_page[0]: # you can change start param here for the write for us URL
