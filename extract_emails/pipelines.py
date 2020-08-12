@@ -22,8 +22,12 @@ class ExtractEmailsPipeline(object):
                 os.remove('get_emails.csv')
             self.collection_name = 'emails'
         
+        # PRODUCTION DB INFO
         # mongodb+srv://admin-santhej:<password>@cluster0.3dv1a.mongodb.net/<dbname>?retryWrites=true&w=majority
         self.client = pymongo.MongoClient('mongodb+srv://admin-santhej:test1234@cluster0.3dv1a.mongodb.net/retryWrites=true&w=majority')
+
+        # DEVELOPMENT ENV DB INFO
+        # self.client = pymongo.MongoClient('mongodb://localhost:27017')
         self.db = self.client["scraper_db"]
 
     def process_item(self, item, spider):
