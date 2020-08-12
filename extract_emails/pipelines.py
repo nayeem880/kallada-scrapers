@@ -4,6 +4,7 @@
 #
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: https://doc.scrapy.org/en/latest/topics/item-pipeline.html
+import datetime
 import os
 import pymongo
 import shutil
@@ -25,13 +26,32 @@ class ExtractEmailsPipeline(object):
         # PRODUCTION DB INFO
         # mongodb+srv://admin-santhej:<password>@cluster0.3dv1a.mongodb.net/<dbname>?retryWrites=true&w=majority
         self.client = pymongo.MongoClient('mongodb+srv://admin-santhej:test1234@cluster0.3dv1a.mongodb.net/retryWrites=true&w=majority')
+        self.db = self.client["scraper_db"]
 
         # DEVELOPMENT ENV DB INFO
         # self.client = pymongo.MongoClient('mongodb://localhost:27017')
-        self.db = self.client["scraper_db"]
 
     def process_item(self, item, spider):
-        self.db[self.collection_name].insert(item)
+        if spider.name == 'get_emails':
+            if item['email'] != 'NA':
+                if item['da'] == 'NA':
+                    print(f'ERROR: Skipping db insertion because DA for {item["website"]} was not found')
+                elif item['pa'] == 'NA':
+                    print(f'ERROR: Skipping db insertion because PA for {item["website"]} was not found')
+                elif item['cf'] == 'NA':
+                    print(f'ERROR: Skipping db insertion because CF for {item["website"]} was not found')
+                elif item['tf'] == 'NA':
+                    print(f'ERROR: Skipping db insertion because TF for {item["website"]} was not found')
+                else:
+                    self.db[self.collection_name].update_one(
+                        {"url": item["url"]}, {"$set": item}, upsert=True
+                    )
+            else:
+                print(f'ERROR: Skipping db insertion because no email was not found for {item["website"]}')
+        else:
+            self.db[self.collection_name].update_one(
+                {"website_url": item["website_url"]}, {"$set": item}, upsert=True
+            )
         return item
 
     def close_spider(self, spider):

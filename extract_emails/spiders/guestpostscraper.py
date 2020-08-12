@@ -55,7 +55,7 @@ class GuestpostscraperSpider(scrapy.Spider):
                     'category': seed_keyword.strip().replace(' ', '_'),
                     'report_title': self.seed_keywords.replace(',', ' & ')
                 }
-                print(item)
+                # print(item)
                 request = Request(url, dont_filter=True)
                 # set the meta['item'] to use the item in the next call back
                 request.meta['item'] = item
@@ -91,7 +91,7 @@ class GuestpostscraperSpider(scrapy.Spider):
                 'category': response.meta['item'].get('category') or 'None',
                 'report_title': self.seed_keywords.replace(',', ' & ')
             }
-            print(item)
+            # print(item)
             r.meta['item'] = item
             if response.meta['item']['start_url'] == self.write_for_us_url:
                 if "start=100" not in next_page[0]: # you can change start param here for the write for us URL

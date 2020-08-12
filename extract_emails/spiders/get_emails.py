@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
+import datetime
 import json
 import os
 import pandas as pd
+import pymongo
 import PyPDF2
 import re
 import requests
@@ -61,6 +63,13 @@ class GetEmailsSpider(scrapy.Spider):
         self.cookie = self._get_cookie()
         self.headers.update({'cookie': self.cookie})
 
+        # PRODUCTION ENV DB
+        self.client = pymongo.MongoClient('mongodb+srv://admin-santhej:test1234@cluster0.3dv1a.mongodb.net/retryWrites=true&w=majority')
+        self.db = self.client["scraper_db"]
+
+        # DEVELOPMENT ENV DB
+        # self.client = pymongo.MongoClient('mongodb://localhost:27017')
+
     def _get_cookie(self):
         cookies = []
         for key, value in self.session.cookies.get_dict().items():
@@ -72,18 +81,42 @@ class GetEmailsSpider(scrapy.Spider):
     def start_requests(self):
         # Access each URL in the self.urls list
         for url in self.urls:
-            domain = url['url'].split('/')[2].replace('www.', '')
-            yield Request(
-                url['url'],
-                callback=self.parse,
-                headers=self.headers,
-                meta={
-                    'dont_proxy': True,
-                    'domain': domain,
-                    'category': url['category'],
-                    'report_title': url['report_title']
-                }
-            )
+            if self.is_db_data_outdated(url['url']):
+                domain = url['url'].split('/')[2].replace('www.', '')
+                yield Request(
+                    url['url'],
+                    callback=self.parse,
+                    headers=self.headers,
+                    meta={
+                        'dont_proxy': True,
+                        'domain': domain,
+                        'category': url['category'],
+                        'report_title': url['report_title']
+                    }
+                )
+
+            # Check if the current url is last of the list
+            # If yes then close the DB connection.
+            if (len(self.urls) - 1) == self.urls.index(url):
+                print('DEBUG: Last URL of the list. Closing DB connection.')
+                self.client.close()
+
+    def is_db_data_outdated(self, url):
+        data = self.db.emails.find_one({"url": url}, {'_id': 0, 'date': 1})
+        if data:
+            today = datetime.datetime.today()
+            db_date = datetime.datetime.strptime(data['date'], "%Y-%m-%d")
+            delta = today - db_date
+            print(f'DEBUG: Db data is {delta.days} days old')
+            if delta.days > 30:
+                # print(f'DEBUG: Re-fetching from data web')
+                return True
+            else:
+                # print(f'DEBUG: Skipping data fetch from web')
+                return False
+        else:
+            # print(f'DEBUG: No data found in db. Fetching from web')
+            return True
 
     def parse(self, response):
         try:
@@ -297,7 +330,8 @@ class GetEmailsSpider(scrapy.Spider):
             'da': json_data['mozDA'] if 'mozDA' in json_data else 'NA',
             'pa': json_data['mozPA'] if 'mozPA' in json_data else 'NA',
             'cf': json_data['majesticCF'] if 'majesticCF' in json_data else 'NA',
-            'tf': json_data['majesticTF'] if 'majesticTF' in json_data else 'NA'
+            'tf': json_data['majesticTF'] if 'majesticTF' in json_data else 'NA',
+            'date': datetime.datetime.now().strftime("%Y-%m-%d")
         }
 
     # def _filter_emails(self, emails):
