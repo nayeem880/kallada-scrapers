@@ -10,6 +10,7 @@ import requests
 import scrapy
 import time
 
+from io import StringIO
 from scrapy.http import Request
 from scrapy.selector import Selector
 
@@ -42,26 +43,9 @@ class GetEmailsSpider(scrapy.Spider):
         },
     }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, use_db=None, *args, **kwargs):
         self.urls = []
         self.email_addresses = []
-
-        # Read the input CSV file & fillup the self.urls list
-        csv_data = pd.read_csv('guestpostscraper.out.csv')
-        for website_url, category, report_title in csv_data[['website_url', 'category', 'report_title']].values:
-            self.urls.append(
-                {
-                    'url': website_url.strip(),
-                    'category': category.strip(),
-                    'report_title': report_title.strip()
-                }
-            )
-        
-        # Open an HTTP session for google.com and set cookies
-        self.session = requests.Session()
-        self.session.get('https://www.google.com/search', headers=self.headers,)
-        self.cookie = self._get_cookie()
-        self.headers.update({'cookie': self.cookie})
 
         # PRODUCTION ENV DB
         self.client = pymongo.MongoClient('mongodb+srv://admin-santhej:test1234@cluster0.3dv1a.mongodb.net/retryWrites=true&w=majority')
@@ -69,6 +53,37 @@ class GetEmailsSpider(scrapy.Spider):
 
         # DEVELOPMENT ENV DB
         # self.client = pymongo.MongoClient('mongodb://localhost:27017')
+        # self.db = self.client["scraper_db"]
+
+        if use_db:
+            # use_db will be true when user uploads a CSV file while running this spider
+            print('DEBUG: Looking for user uploaded URLs in DB')
+            url_data = self.db.uploadedcsvs.find({}, {'_id': 0, 'website_url': 1, 'category': 1, 'report_title': 1})
+            for data in url_data:
+                self.urls.append(
+                    {
+                        'url': data['website_url'].strip(),
+                        'category': data['category'].strip(),
+                        'report_title': data['report_title'].strip()
+                    }
+                )
+        else:
+            # Read the CSV file & fillup the self.urls list
+            csv_data = pd.read_csv('guestpostscraper.out.csv')
+            for website_url, category, report_title in csv_data[['website_url', 'category', 'report_title']].values:
+                self.urls.append(
+                    {
+                        'url': website_url.strip(),
+                        'category': category.strip(),
+                        'report_title': report_title.strip()
+                    }
+                )
+
+        # Open an HTTP session for google.com and set cookies
+        self.session = requests.Session()
+        self.session.get('https://www.google.com/search', headers=self.headers,)
+        self.cookie = self._get_cookie()
+        self.headers.update({'cookie': self.cookie})
 
     def _get_cookie(self):
         cookies = []

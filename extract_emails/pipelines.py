@@ -30,6 +30,7 @@ class ExtractEmailsPipeline(object):
 
         # DEVELOPMENT ENV DB INFO
         # self.client = pymongo.MongoClient('mongodb://localhost:27017')
+        # self.db = self.client["scraper_db"]
 
     def process_item(self, item, spider):
         if spider.name == 'get_emails':
