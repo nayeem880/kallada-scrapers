@@ -43,7 +43,7 @@ class GetEmailsSpider(scrapy.Spider):
         },
     }
 
-    def __init__(self, use_db=None, *args, **kwargs):
+    def __init__(self, use_db=None, report_title=None, *args, **kwargs):
         self.urls = []
         self.email_addresses = []
 
@@ -58,13 +58,13 @@ class GetEmailsSpider(scrapy.Spider):
         if use_db:
             # use_db will be true when user uploads a CSV file while running this spider
             print('DEBUG: Looking for user uploaded URLs in DB')
-            url_data = self.db.uploadedcsvs.find({}, {'_id': 0, 'website_url': 1, 'category': 1, 'report_title': 1})
+            url_data = self.db.uploadedcsvs.find({}, {'_id': 0, 'website_url': 1})
             for data in url_data:
                 self.urls.append(
                     {
                         'url': data['website_url'].strip(),
-                        'category': data['category'].strip(),
-                        'report_title': data['report_title'].strip()
+                        'category': report_title.strip(),
+                        'report_title': report_title.strip()
                     }
                 )
         else:
