@@ -11,6 +11,7 @@ import scrapy
 import time
 
 from io import StringIO
+from scrapy.http import JsonRequest
 from scrapy.http import Request
 from scrapy.selector import Selector
 
@@ -84,6 +85,9 @@ class GetEmailsSpider(scrapy.Spider):
         self.session.get('https://www.google.com/search', headers=self.headers,)
         self.cookie = self._get_cookie()
         self.headers.update({'cookie': self.cookie})
+        self.snovio_access_token = self._get_snovio_access_token()
+        if not self.snovio_access_token:
+            print("ERROR: SNOVIO Access Token is not available. SNOVIO requests will be skipped.")
 
     def _get_cookie(self):
         cookies = []
@@ -92,6 +96,20 @@ class GetEmailsSpider(scrapy.Spider):
         cookie = "; ".join(cookies)
         print('[INFO]  Cookie: %s' % cookie)
         return cookie
+
+    def _get_snovio_access_token(self):
+        data = {
+            "grant_type":"client_credentials",
+            "client_id":"97fc7cadbba633d0c17a833e6dfccaff",
+            "client_secret":"0eed64cb98e69a1735179fcee427a6cc"
+        }
+        response = requests.post('https://api.snov.io/v1/oauth/access_token', json=data)
+        access_token = None
+        if response.status_code == 200:
+            access_token = response.json().get('access_token')
+
+        print(f"DEBUG: SnovIO Access Token - {access_token}")
+        return access_token
 
     def start_requests(self):
         # Access each URL in the self.urls list
@@ -231,6 +249,31 @@ class GetEmailsSpider(scrapy.Spider):
                     }
                 )
 
+            if not self.email_addresses:
+                domain = response.url.split('/')[2].replace('www.', '')
+                # Query snovio API for 100 email records of all type
+                params = {
+                    "domain": domain,
+                    "type": "all",
+                    "offset": 0,
+                    "limit": 100
+                }
+                if self.snovio_access_token:
+                    yield JsonRequest(
+                        'https://api.snov.io/v1/get-domain-emails-with-info',
+                        method='POST',
+                        headers={'Authorization': f'Bearer {self.snovio_access_token}'},
+                        data=params,
+                        callback=self.parse_snovio_response,
+                        dont_filter=True,
+                        meta={
+                            'url': response.url,
+                            'category': response.meta['category'],
+                            'report_title': response.meta['report_title'],
+                            'domain': domain,
+                        }
+                    )
+
     # Method to parse encoded email addresses
     # Emails will have a class of __cf_email__.
     # Modify this method if you find any other xpath or css
@@ -312,7 +355,43 @@ class GetEmailsSpider(scrapy.Spider):
                     if not email_addresses:
                         print(
                             f'ERROR: Email not found in Google search - {response.url}')
-        unique_emails = list(dict.fromkeys([x.lower() for x in email_addresses]))
+
+        if email_addresses:
+            unique_emails = list(dict.fromkeys([x.lower() for x in email_addresses]))
+            yield Request(
+                f'http://domdetailer.com/api/checkDomain.php?domain={response.meta["domain"]}&app=DomDetailer&apikey={self.dom_detailer_api_key}&majesticChoice=root',
+                headers=self.headers,
+                callback=self.parse_dom_details,
+                meta={
+                    'dont_proxy': True,
+                    'url': response.meta['url'],
+                    'category': response.meta['category'],
+                    'report_title': response.meta['report_title'],
+                    'domain': response.meta['domain'],
+                    'email': unique_emails[0] if unique_emails else 'NA',
+                }
+            )
+        else:
+            self.email_addresses = []
+
+    # Method to parse SNOVIO API response
+    # API query is sent to search for all type of emails ie: personal + generic
+    # Personal & Generic emails are filtered and stored in two lists
+    # First item from each list is picked and joined as a string
+    def parse_snovio_response(self, response):
+        email_addresses = []
+        if response.status == 200:
+            json_data = response.json()
+            print('DEBUG: SNOVIO API Response')
+            print(json_data)
+            if json_data['result']:
+                personal_emails = [x for x in json_data['emails'] if "firstName" in x]
+                generic_emails = [x for x in json_data['emails'] if "firstName" not in x]
+                if personal_emails:
+                    email_addresses.append(personal_emails[0].get('email'))
+                if generic_emails:
+                    email_addresses.append(generic_emails[0].get('email'))
+
         yield Request(
             f'http://domdetailer.com/api/checkDomain.php?domain={response.meta["domain"]}&app=DomDetailer&apikey={self.dom_detailer_api_key}&majesticChoice=root',
             headers=self.headers,
@@ -323,7 +402,7 @@ class GetEmailsSpider(scrapy.Spider):
                 'category': response.meta['category'],
                 'report_title': response.meta['report_title'],
                 'domain': response.meta['domain'],
-                'email': unique_emails[0] if unique_emails else 'NA',
+                'email': ','.join(email_addresses) if email_addresses else 'NA',
             }
         )
 
