@@ -1,1 +1,2 @@
+web: scrapyd
 worker: scrapyd
