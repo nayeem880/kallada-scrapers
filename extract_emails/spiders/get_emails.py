@@ -44,7 +44,7 @@ class GetEmailsSpider(scrapy.Spider):
         },
     }
 
-    def __init__(self, use_db=None, report_title=None, *args, **kwargs):
+    def __init__(self, use_db='', report_title='', use_csv='', *args, **kwargs):
         self.urls = []
         self.email_addresses = []
 
@@ -56,10 +56,14 @@ class GetEmailsSpider(scrapy.Spider):
         # self.client = pymongo.MongoClient('mongodb://localhost:27017')
         # self.db = self.client["scraper_db"]
 
-        if use_db:
+        if use_db == 'true':
             # use_db will be true when user uploads a CSV file while running this spider
-            print('DEBUG: Looking for user uploaded URLs in DB')
-            url_data = self.db.uploadedcsvs.find({}, {'_id': 0, 'website_url': 1})
+            # or choose to run both the spiders together
+            if use_csv == 'true':
+                print('DEBUG: Looking for user uploaded URLs in DB')
+                url_data = self.db.uploadedcsvs.find({}, {'_id': 0, 'website_url': 1})
+            else:
+                url_data = self.db.urls.find({}, {'_id': 0, 'website_url': 1})
             for data in url_data:
                 self.urls.append(
                     {
