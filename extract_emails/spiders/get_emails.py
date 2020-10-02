@@ -319,7 +319,7 @@ class GetEmailsSpider(scrapy.Spider):
                     'dont_proxy': True,
                     'url': response.meta['url'],
                     'category': response.meta['category'],
-                    'report_title': response.meta['report_title'],
+                    'report_title': response.meta['report_title'].replace(',', ' & '),
                     'domain': response.meta['domain'],
                     'email': unique_emails[0] if unique_emails else 'NA',
                 }
@@ -370,7 +370,7 @@ class GetEmailsSpider(scrapy.Spider):
                     'dont_proxy': True,
                     'url': response.meta['url'],
                     'category': response.meta['category'],
-                    'report_title': response.meta['report_title'],
+                    'report_title': response.meta['report_title'].replace(',', ' & '),
                     'domain': response.meta['domain'],
                     'email': unique_emails[0] if unique_emails else 'NA',
                 }
@@ -404,7 +404,7 @@ class GetEmailsSpider(scrapy.Spider):
                 'dont_proxy': True,
                 'url': response.meta['url'],
                 'category': response.meta['category'],
-                'report_title': response.meta['report_title'],
+                'report_title': response.meta['report_title'].replace(',', ' & '),
                 'domain': response.meta['domain'],
                 'email': ','.join(email_addresses) if email_addresses else 'NA',
             }
@@ -423,7 +423,7 @@ class GetEmailsSpider(scrapy.Spider):
             'website': response.meta['domain'],
             'url': response.meta['url'],
             'category': response.meta['category'],
-            'report_title': response.meta['report_title'],
+            'report_title': response.meta['report_title'].replace(',', ' & '),
             'email': response.meta['email'],
             'da': json_data['mozDA'] if 'mozDA' in json_data else 'NA',
             'pa': json_data['mozPA'] if 'mozPA' in json_data else 'NA',

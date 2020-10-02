@@ -44,12 +44,14 @@ class ExtractEmailsPipeline(object):
                 elif item['tf'] == 'NA':
                     print(f'ERROR: Skipping db insertion because TF for {item["website"]} was not found')
                 else:
+                    print(f'get_emails db Insert -> {item}')
                     self.db[self.collection_name].update_one(
                         {"url": item["url"]}, {"$set": item}, upsert=True
                     )
             else:
                 print(f'ERROR: Skipping db insertion because no email was not found for {item["website"]}')
         else:
+            print(f'guestpostscraper bb Insert -> {item}')
             self.db[self.collection_name].update_one(
                 {"website_url": item["website_url"]}, {"$set": item}, upsert=True
             )

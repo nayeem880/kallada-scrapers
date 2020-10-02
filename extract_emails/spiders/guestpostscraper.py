@@ -35,6 +35,13 @@ class GuestpostscraperSpider(scrapy.Spider):
         },
     }
 
+    def __init__(self, seed_keywords='', report_title='', *args, **kwargs):
+        self.seed_keywords = seed_keywords
+        self.report_title = report_title or self.seed_keywords
+        self.report_title = self.report_title.replace(',', ' & ')
+        print('DEBUG: seed_keywords - %s' % seed_keywords)
+        print('DEBUG: report_title - %s' % report_title)
+
     def start_requests(self):
         for seed_keyword in self.seed_keywords.split(','):
             self.write_for_us_url = 'https://www.google.com/search?q=' + quote(seed_keyword + ' intitle:"write for us"')
@@ -53,7 +60,7 @@ class GuestpostscraperSpider(scrapy.Spider):
                 item = {
                     'start_url': url,
                     'category': seed_keyword.strip().replace(' ', '_'),
-                    'report_title': self.seed_keywords.replace(',', ' & ')
+                    'report_title': self.report_title
                 }
                 # print(item)
                 request = Request(url, dont_filter=True)
@@ -80,7 +87,7 @@ class GuestpostscraperSpider(scrapy.Spider):
                     "website_url": r,
                     "base_url": response.meta['item']['start_url'],
                     "category": response.meta['item'].get('category') or 'None',
-                    'report_title': self.seed_keywords.replace(',', ' & ')
+                    'report_title': self.report_title
                 }
 
         if next_page != []:
@@ -89,7 +96,7 @@ class GuestpostscraperSpider(scrapy.Spider):
             item = {
                 'start_url': response.meta['item']['start_url'],
                 'category': response.meta['item'].get('category') or 'None',
-                'report_title': self.seed_keywords.replace(',', ' & ')
+                'report_title': self.report_title
             }
             # print(item)
             r.meta['item'] = item
