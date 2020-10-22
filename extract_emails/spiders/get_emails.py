@@ -45,6 +45,9 @@ class GetEmailsSpider(scrapy.Spider):
     }
 
     def __init__(self, use_db='', report_title='', use_csv='', *args, **kwargs):
+        self.logger.debug(f'use_db-{use_db}')
+        self.logger.debug(f'report_title-{report_title}')
+        self.logger.debug(f'use_csv-{use_csv}')
         self.urls = []
         self.email_addresses = []
 
@@ -60,10 +63,13 @@ class GetEmailsSpider(scrapy.Spider):
             # use_db will be true when user uploads a CSV file while running this spider
             # or choose to run both the spiders together
             if use_csv == 'true':
-                print('DEBUG: Looking for user uploaded URLs in DB')
+                self.logger.debug('DEBUG: Looking for user uploaded URLs in DB')
                 url_data = self.db.uploadedcsvs.find({}, {'_id': 0, 'website_url': 1})
+                self.logger.debug(f'URLs uploaded by user in CSV found')
             else:
-                url_data = self.db.urls.find({}, {'_id': 0, 'website_url': 1})
+                self.logger.debug('DEBUG: Looking for URLs in DB')
+                url_data = self.db.urls.find({'report_title': report_title}, {'_id': 0, 'website_url': 1})
+                self.logger.debug(f'URLs found for filter - report_title: {report_title}')
             for data in url_data:
                 self.urls.append(
                     {
@@ -91,14 +97,14 @@ class GetEmailsSpider(scrapy.Spider):
         self.headers.update({'cookie': self.cookie})
         self.snovio_access_token = self._get_snovio_access_token()
         if not self.snovio_access_token:
-            print("ERROR: SNOVIO Access Token is not available. SNOVIO requests will be skipped.")
+            self.logger.debug("ERROR: SNOVIO Access Token is not available. SNOVIO requests will be skipped.")
 
     def _get_cookie(self):
         cookies = []
         for key, value in self.session.cookies.get_dict().items():
             cookies.append('%s=%s' % (key, value))
         cookie = "; ".join(cookies)
-        print('[INFO]  Cookie: %s' % cookie)
+        self.logger.debug('[INFO]  Cookie: %s' % cookie)
         return cookie
 
     def _get_snovio_access_token(self):
@@ -112,7 +118,7 @@ class GetEmailsSpider(scrapy.Spider):
         if response.status_code == 200:
             access_token = response.json().get('access_token')
 
-        print(f"DEBUG: SnovIO Access Token - {access_token}")
+        self.logger.debug(f"DEBUG: SnovIO Access Token - {access_token}")
         return access_token
 
     def start_requests(self):
@@ -135,7 +141,7 @@ class GetEmailsSpider(scrapy.Spider):
             # Check if the current url is last of the list
             # If yes then close the DB connection.
             if (len(self.urls) - 1) == self.urls.index(url):
-                print('DEBUG: Last URL of the list. Closing DB connection.')
+                self.logger.debug('DEBUG: Last URL of the list. Closing DB connection.')
                 self.client.close()
 
     def is_db_data_outdated(self, url):
@@ -144,15 +150,15 @@ class GetEmailsSpider(scrapy.Spider):
             today = datetime.datetime.today()
             db_date = datetime.datetime.strptime(data['date'], "%Y-%m-%d")
             delta = today - db_date
-            print(f'DEBUG: Db data is {delta.days} days old')
+            self.logger.debug(f'DEBUG: Db data is {delta.days} days old')
             if delta.days > 30:
-                # print(f'DEBUG: Re-fetching from data web')
+                # self.logger.debug(f'DEBUG: Re-fetching from data web')
                 return True
             else:
-                # print(f'DEBUG: Skipping data fetch from web')
+                # self.logger.debug(f'DEBUG: Skipping data fetch from web')
                 return False
         else:
-            # print(f'DEBUG: No data found in db. Fetching from web')
+            # self.logger.debug(f'DEBUG: No data found in db. Fetching from web')
             return True
 
     def parse(self, response):
@@ -309,7 +315,7 @@ class GetEmailsSpider(scrapy.Spider):
                             decoded_email = re.sub(r'\s+|\[|\]', '', decoded_email)
                             self.email_addresses.append(decoded_email)
                     else:
-                        print(f'ERROR: Decoded Email not found - {response.url}')
+                        self.logger.debug(f'ERROR: Decoded Email not found - {response.url}')
             unique_emails = list(dict.fromkeys([x.lower() for x in self.email_addresses]))
             yield Request(
                 f'http://domdetailer.com/api/checkDomain.php?domain={response.meta["domain"]}&app=DomDetailer&apikey={self.dom_detailer_api_key}&majesticChoice=root',
@@ -359,7 +365,7 @@ class GetEmailsSpider(scrapy.Spider):
                                     email = re.sub(r'\s+|\[|\]', '', email)
                                     email_addresses.append(email)
                     if not email_addresses:
-                        print(
+                        self.logger.debug(
                             f'ERROR: Email not found in Google search - {response.url}')
 
         if email_addresses:
@@ -388,8 +394,8 @@ class GetEmailsSpider(scrapy.Spider):
         email_addresses = []
         if response.status == 200:
             json_data = response.json()
-            print('DEBUG: SNOVIO API Response')
-            print(json_data)
+            self.logger.debug('DEBUG: SNOVIO API Response')
+            self.logger.debug(json_data)
             if json_data['result']:
                 personal_emails = [x for x in json_data['emails'] if "firstName" in x]
                 generic_emails = [x for x in json_data['emails'] if "firstName" not in x]
