@@ -339,6 +339,8 @@ class GetEmailsSpider(scrapy.Spider):
         except:
             if response.body:
                 body = response.body.decode("utf-8", errors="ignore")
+            else:
+                body = '<html></html>'
         resp = Selector(text=body)
 
         if resp.xpath('//span[@class="st"]/text()'):
@@ -454,15 +456,11 @@ class GetEmailsSpider(scrapy.Spider):
     #                 self.email_addresses.append(email)
 
     def _filter_emails(self, email):
-        # Check if '.png' not in email
-        if email.endswith('.jpg'):
-            pass
-        # Check if '.jpg' not in email
-        elif email.endswith('.png'):
-            pass
-        # Check 'gif' not in email:
-        elif email.endswith('.gif'):
-            pass
+        # Extension to be ignored. If extracted email address contains any of these then ignore it
+        exts_to_ignore = ['.jpg', '.jpeg', '.png', '.gif', 'tiff', '.psd', '.pdf', '.eps', '.webpack']
+        for ext in exts_to_ignore:
+            if email.endswith(ext):
+                break
         else:
             (user, domain) = email.split('@')
             # Check if domain part of the extracted email is not like user@domain eg - a@b
