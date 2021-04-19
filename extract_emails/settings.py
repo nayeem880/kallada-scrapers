@@ -1,14 +1,3 @@
-# -*- coding: utf-8 -*-
-
-# Scrapy settings for extract_emails project
-#
-# For simplicity, this file contains only settings considered important or
-# commonly used. You can find more settings consulting the documentation:
-#
-#     https://doc.scrapy.org/en/latest/topics/settings.html
-#     https://doc.scrapy.org/en/latest/topics/downloader-middleware.html
-#     https://doc.scrapy.org/en/latest/topics/spider-middleware.html
-
 BOT_NAME = 'extract_emails'
 
 SPIDER_MODULES = ['extract_emails.spiders']
@@ -22,15 +11,15 @@ NEWSPIDER_MODULE = 'extract_emails.spiders'
 ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-# CONCURRENT_REQUESTS = 256
+CONCURRENT_REQUESTS = 256
 
 # Configure a delay for requests for the same website (default: 0)
 # See https://doc.scrapy.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
-#DOWNLOAD_DELAY = 3
+DOWNLOAD_DELAY = 10
 # The download delay setting will honor only one of:
-# CONCURRENT_REQUESTS_PER_DOMAIN = 128
-#CONCURRENT_REQUESTS_PER_IP = 16
+CONCURRENT_REQUESTS_PER_DOMAIN = 1
+# CONCURRENT_REQUESTS_PER_IP = 16 doest support by priority queue
 
 # Disable cookies (enabled by default)
 #COOKIES_ENABLED = False
@@ -66,7 +55,7 @@ DOWNLOADER_MIDDLEWARES = {
 # Configure item pipelines
 # See https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-   'extract_emails.pipelines.ExtractEmailsPipeline': 300,
+   'extract_emails.pipelines.ExtractEmailsPipeline': 1000,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
@@ -96,8 +85,7 @@ HTTPERROR_ALLOW_ALL = True
 
 CRAWLERA_ENABLED = True
 CRAWLERA_APIKEY = '6fb5e1784f5846af94c3f7c9cfaef420'
-CONCURRENT_REQUESTS = 128
-CONCURRENT_REQUESTS_PER_DOMAIN = 32
+
 AUTOTHROTTLE_ENABLED = False
 CRAWLERA_PRESERVE_DELAY = False
 
@@ -109,8 +97,9 @@ LOG_LEVEL = 'INFO'
 COOKIES_ENABLED = False
 RETRY_ENABLED = False
 # REDIRECT_MAX_TIMES = 1
-# DOWNLOAD_TIMEOUT = 10
-DOWNLOAD_MAXSIZE = 5592405
+DOWNLOAD_TIMEOUT = 15
+DNS_TIMEOUT = 15
+DOWNLOAD_MAXSIZE = 10000000
 # AJAXCRAWL_ENABLED = True
 # DEPTH_PRIORITY = 1
 # SCHEDULER_DISK_QUEUE = 'scrapy.squeues.PickleFifoDiskQueue'

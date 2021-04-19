@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import datetime
 import json
 import os
@@ -45,23 +44,20 @@ class GetEmailsSpider(scrapy.Spider):
     }
 
     def __init__(self, use_db='', report_title='', use_csv='', *args, **kwargs):
-        self.logger.debug(f'use_db-{use_db}')
-        self.logger.debug(f'report_title-{report_title}')
-        self.logger.debug(f'use_csv-{use_csv}')
+        self.logger.debug(f'use_db---------------------------------------------------------{use_db}')
+        self.logger.debug(f'report_title---------------------------------------------------------{report_title}')
+        self.logger.debug(f'use_csv---------------------------------------------------------{use_csv}')
         self.urls = []
         self.email_addresses = []
 
         # PRODUCTION ENV DB
-        self.client = pymongo.MongoClient('mongodb+srv://admin-santhej:test1234@cluster0.3dv1a.mongodb.net/retryWrites=true&w=majority')
-        self.db = self.client["scraper_db"]
+        self.client = pymongo.MongoClient("mongodb+srv://nayeem:imunbd990@cluster0.vh1iq.mongodb.net/get_email?retryWrites=true&w=majority")
+        self.db = self.client["get_email"]
 
-        # DEVELOPMENT ENV DB
-        # self.client = pymongo.MongoClient('mongodb://localhost:27017')
-        # self.db = self.client["scraper_db"]
 
+        # use_db will be true when user uploads a CSV file while running this spider
+        # or choose to run both the spiders together
         if use_db == 'true':
-            # use_db will be true when user uploads a CSV file while running this spider
-            # or choose to run both the spiders together
             if use_csv == 'true':
                 self.logger.debug('DEBUG: Looking for user uploaded URLs in DB')
                 url_data = self.db.uploadedcsvs.find({}, {'_id': 0, 'website_url': 1})
@@ -90,36 +86,47 @@ class GetEmailsSpider(scrapy.Spider):
                     }
                 )
 
+
+        print()
+        print()
+        print("Self urls ----------------------self urls -------------------------", self.urls)
+        print()
+        print()
+
+
         # Open an HTTP session for google.com and set cookies
         self.session = requests.Session()
         self.session.get('https://www.google.com/search', headers=self.headers,)
         self.cookie = self._get_cookie()
         self.headers.update({'cookie': self.cookie})
-        self.snovio_access_token = self._get_snovio_access_token()
-        if not self.snovio_access_token:
-            self.logger.debug("ERROR: SNOVIO Access Token is not available. SNOVIO requests will be skipped.")
+
+        # we are going to limit the use of snov io access for limiting the cost
+        # self.snovio_access_token = self._get_snovio_access_token()
+        # if not self.snovio_access_token:
+        #     self.logger.debug("ERROR: SNOVIO Access Token is not available. SNOVIO requests will be skipped.")
 
     def _get_cookie(self):
         cookies = []
         for key, value in self.session.cookies.get_dict().items():
             cookies.append('%s=%s' % (key, value))
         cookie = "; ".join(cookies)
-        self.logger.debug('[INFO]  Cookie: %s' % cookie)
+        self.logger.debug('[INFO]  Cookie: %s -----------------------------------------------' % cookie)
         return cookie
 
-    def _get_snovio_access_token(self):
-        data = {
-            "grant_type":"client_credentials",
-            "client_id":"97fc7cadbba633d0c17a833e6dfccaff",
-            "client_secret":"0eed64cb98e69a1735179fcee427a6cc"
-        }
-        response = requests.post('https://api.snov.io/v1/oauth/access_token', json=data)
-        access_token = None
-        if response.status_code == 200:
-            access_token = response.json().get('access_token')
+    # def _get_snovio_access_token(self):
+    #     data = {
+    #         "grant_type":"client_credentials",
+    #         "client_id":"97fc7cadbba633d0c17a833e6dfccaff",
+    #         "client_secret":"0eed64cb98e69a1735179fcee427a6cc"
+    #     }
+    #     response = requests.post('https://api.snov.io/v1/oauth/access_token', json=data)
+    #     access_token = None
+    #     if response.status_code == 200:
+    #         access_token = response.json().get('access_token')
 
-        self.logger.debug(f"DEBUG: SnovIO Access Token - {access_token}")
-        return access_token
+    #     self.logger.debug(f"DEBUG: SnovIO Access Token - {access_token}")
+    #     return access_toke
+    
 
     def start_requests(self):
         # Access each URL in the self.urls list
@@ -145,22 +152,31 @@ class GetEmailsSpider(scrapy.Spider):
                 self.client.close()
 
     def is_db_data_outdated(self, url):
-        data = self.db.emails.find_one({"url": url}, {'_id': 0, 'date': 1})
+        # here will be an error
+        # data = self.db.emails.find_one({"url": url}, {'_id': 0, 'date': 1})
+        data = self.db.get_email.find_one({"url": url}, {'_id': 0, 'date': 1})
         if data:
             today = datetime.datetime.today()
             db_date = datetime.datetime.strptime(data['date'], "%Y-%m-%d")
             delta = today - db_date
-            self.logger.debug(f'DEBUG: Db data is {delta.days} days old')
+            self.logger.debug(f'DEBUG: Db data is ------------------------------------------------ {delta.days} days old')
             if delta.days > 30:
-                # self.logger.debug(f'DEBUG: Re-fetching from data web')
+                self.logger.debug(f'DEBUG: Re-fetching from data web ------------------------------------------------')
                 return True
             else:
-                # self.logger.debug(f'DEBUG: Skipping data fetch from web')
+                self.logger.debug(f'DEBUG: Skipping ------------------------------------------------ data fetch from web')
                 return False
         else:
-            # self.logger.debug(f'DEBUG: No data found in db. Fetching from web')
+            self.logger.debug(f'DEBUG: No data found in db. ------------------------------------------------ Fetching from web')
             return True
 
+
+
+
+
+
+
+# parse callback funtion for working with response callback
     def parse(self, response):
         try:
             body = response.text
@@ -206,8 +222,7 @@ class GetEmailsSpider(scrapy.Spider):
 
         if self.email_addresses:
             # If email addresses are found then yield URL & email addresses
-            unique_emails = list(dict.fromkeys(
-                [x.lower() for x in self.email_addresses]))
+            unique_emails = list(dict.fromkeys([x.lower() for x in self.email_addresses]))
             self.email_addresses = []
             yield Request(
                 f'http://domdetailer.com/api/checkDomain.php?domain={domain}&app=DomDetailer&apikey={self.dom_detailer_api_key}&majesticChoice=root',
@@ -218,7 +233,8 @@ class GetEmailsSpider(scrapy.Spider):
                     'url': response.url,
                     'category': response.meta['category'],
                     'report_title': response.meta['report_title'],
-                    'domain': domain,
+                    # response.meta['domain']
+                    'domain': domain,   
                     'email': unique_emails[0] if unique_emails else 'NA',
                 }
             )
@@ -235,6 +251,7 @@ class GetEmailsSpider(scrapy.Spider):
                     'url': response.url,
                     'category': response.meta['category'],
                     'report_title': response.meta['report_title'],
+                    # response.meta['domain']
                     'domain': domain,
                 }
             )
@@ -243,6 +260,9 @@ class GetEmailsSpider(scrapy.Spider):
             # Search query example - site:techristic.com "@techristic.com" contact us
             if not self.email_addresses:
                 domain = response.url.split('/')[2].replace('www.', '')
+                
+                print("NO Emails found so now searching google and domain is  --------------------------------", domain)
+                
                 url = f'https://www.google.com/search?q=site%3A{domain}+%22%40{domain}%22+contact+us&rlz=1C1GCEA_enIN901IN901&oq=site%3A{domain}+%22%40{domain}%22+contact+us&aqs=chrome..69i57j69i58.4168j0j7&sourceid=chrome&ie=UTF-8'
                 headers = self.headers.copy()
                 headers.update({'authority': 'www.google.com', 'X-Crawlera-Max-Retries': 0})
@@ -255,34 +275,60 @@ class GetEmailsSpider(scrapy.Spider):
                         'url': response.url,
                         'category': response.meta['category'],
                         'report_title': response.meta['report_title'],
+                        # response.meta['domain']
                         'domain': domain,
                     }
                 )
 
-            if not self.email_addresses:
-                domain = response.url.split('/')[2].replace('www.', '')
-                # Query snovio API for 100 email records of all type
-                params = {
-                    "domain": domain,
-                    "type": "all",
-                    "offset": 0,
-                    "limit": 100
-                }
-                if self.snovio_access_token:
-                    yield JsonRequest(
-                        'https://api.snov.io/v1/get-domain-emails-with-info',
-                        method='POST',
-                        headers={'Authorization': f'Bearer {self.snovio_access_token}'},
-                        data=params,
-                        callback=self.parse_snovio_response,
-                        dont_filter=True,
-                        meta={
-                            'url': response.url,
-                            'category': response.meta['category'],
-                            'report_title': response.meta['report_title'],
-                            'domain': domain,
-                        }
-                    )
+            # if not self.email_addresses:
+            #     domain = response.url.split('/')[2].replace('www.', '')
+            #     # Query snovio API for 100 email records of all type
+            #     params = {
+            #         "domain": domain,
+            #         "type": "all",
+            #         "offset": 0,
+            #         "limit": 100
+            #     }
+            #     if self.snovio_access_token:
+            #         yield JsonRequest(
+            #             'https://api.snov.io/v1/get-domain-emails-with-info',
+            #             method='POST',
+            #             headers={'Authorization': f'Bearer {self.snovio_access_token}'},
+            #             data=params,
+            #             callback=self.parse_snovio_response,
+            #             dont_filter=True,
+            #             meta={
+            #                 'url': response.url,
+            #                 'category': response.meta['category'],
+            #                 'report_title': response.meta['report_title'],
+            #                 'domain': domain,
+            #             }
+            #         )
+
+    def parse_dom_details(self, response):
+        if response.headers.get('Content-Type'):
+            try: 
+                json_data = json.loads(response.text)
+            except:
+                json_data = {}
+        else:
+            json_data = {}
+    
+        yield {
+            'website': response.meta['domain'],
+            'url': response.meta['url'],
+            'category': response.meta['category'],
+            'report_title': response.meta['report_title'].replace(',', ' & '),
+            'email': response.meta['email'],
+            'da': json_data['mozDA'] if 'mozDA' in json_data else 'NA',
+            'pa': json_data['mozPA'] if 'mozPA' in json_data else 'NA',
+            'cf': json_data['majesticCF'] if 'majesticCF' in json_data else 'NA',
+            'tf': json_data['majesticTF'] if 'majesticTF' in json_data else 'NA',
+            'date': datetime.datetime.now().strftime("%Y-%m-%d"),
+            # 'snov_io': response.meta.get('snov_io') or 'No'
+        }
+
+
 
     # Method to parse encoded email addresses
     # Emails will have a class of __cf_email__.
@@ -297,8 +343,7 @@ class GetEmailsSpider(scrapy.Spider):
         resp = Selector(text=body)
         
         if resp.xpath('//span[@class="__cf_email__"]/@data-cfemail'):
-            encoded_emails = resp.xpath(
-                '//span[@class="__cf_email__"]/@data-cfemail').getall()
+            encoded_emails = resp.xpath('//span[@class="__cf_email__"]/@data-cfemail').getall()
 
         if encoded_emails:
             for encoded_email in encoded_emails:
@@ -316,6 +361,8 @@ class GetEmailsSpider(scrapy.Spider):
                             self.email_addresses.append(decoded_email)
                     else:
                         self.logger.debug(f'ERROR: Decoded Email not found - {response.url}')
+
+
             unique_emails = list(dict.fromkeys([x.lower() for x in self.email_addresses]))
             yield Request(
                 f'http://domdetailer.com/api/checkDomain.php?domain={response.meta["domain"]}&app=DomDetailer&apikey={self.dom_detailer_api_key}&majesticChoice=root',
@@ -332,6 +379,31 @@ class GetEmailsSpider(scrapy.Spider):
             )
         else:
             self.email_addresses = []
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
 
     # Method to parse google search results
     # Each google search results will be stored under a span of class "st"
@@ -386,59 +458,190 @@ class GetEmailsSpider(scrapy.Spider):
         else:
             self.email_addresses = []
 
+    
+
+
+
+
+
+
+    def _filter_emails(self, email):
+        # Extension to be ignored. If extracted email address contains any of these then ignore it
+        exts_to_ignore = ['.jpg', '.jpeg', '.png', '.gif', 'tiff', '.psd', '.pdf', '.eps', '.webpack']
+        for ext in exts_to_ignore:
+            if email.endswith(ext):
+                break
+        else:
+            (user, domain) = email.split('@')
+            # Check if domain part of the extracted email is not like user@domain eg - a@b
+            # Check if root domain of the email domain is not a number eg css@1.2.4
+            if len(domain.split('.')) > 1 and not re.match(r'\d+', domain.split('.')[-1]):
+                # Check the email string does not start with @ eg- @twitterhandle
+                if not email.startswith('@'):
+                    email = email.strip('-').strip('.')
+                    email = re.sub(r'\s+|\[|\]', '', email)
+                    self.email_addresses.append(email)
+    
+    
+    def _read_pdf(self, response_body):
+        body = ""
+        # body = response.body.decode("utf-8", errors="ignore")
+        with open('response.pdf', 'wb') as file:
+            file.write(response_body)
+        # creating a pdf file object
+        pdfFileObj = open('response.pdf', 'rb')
+        # creating a pdf reader object
+        pdfReader = PyPDF2.PdfFileReader(pdfFileObj)
+        # Go through all the pages and extract text
+        for page_num in range(pdfReader.numPages):
+            # creating a page object
+            pageObj = pdfReader.getPage(page_num)
+            # extracting text from page
+            body += pageObj.extractText()
+        return body
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# #########################################################################################################################################################
+# #########################################################################################################################################################
+# #########################################################################################################################################################
+# #########################################################################################################################################################
+
     # Method to parse SNOVIO API response
     # API query is sent to search for all type of emails ie: personal + generic
     # Personal & Generic emails are filtered and stored in two lists
     # First item from each list is picked and joined as a string
-    def parse_snovio_response(self, response):
-        email_addresses = []
-        if response.status == 200:
-            json_data = response.json()
-            self.logger.debug('DEBUG: SNOVIO API Response')
-            self.logger.debug(json_data)
-            if json_data['result']:
-                personal_emails = [x for x in json_data['emails'] if "firstName" in x]
-                generic_emails = [x for x in json_data['emails'] if "firstName" not in x]
-                if personal_emails:
-                    email_addresses.append(personal_emails[0].get('email'))
-                if generic_emails:
-                    email_addresses.append(generic_emails[0].get('email'))
+    # def parse_snovio_response(self, response):
+    #     email_addresses = []
+    #     if response.status == 200:
+    #         json_data = response.json()
+    #         self.logger.debug('DEBUG: SNOVIO API Response')
+    #         self.logger.debug(json_data)
+    #         if json_data['result']:
+    #             personal_emails = [x for x in json_data['emails'] if "firstName" in x]
+    #             generic_emails = [x for x in json_data['emails'] if "firstName" not in x]
+    #             if personal_emails:
+    #                 email_addresses.append(personal_emails[0].get('email'))
+    #             if generic_emails:
+    #                 email_addresses.append(generic_emails[0].get('email'))
 
-        yield Request(
-            f'http://domdetailer.com/api/checkDomain.php?domain={response.meta["domain"]}&app=DomDetailer&apikey={self.dom_detailer_api_key}&majesticChoice=root',
-            headers=self.headers,
-            callback=self.parse_dom_details,
-            meta={
-                'dont_proxy': True,
-                'url': response.meta['url'],
-                'category': response.meta['category'],
-                'report_title': response.meta['report_title'].replace(',', ' & '),
-                'domain': response.meta['domain'],
-                'email': ','.join(email_addresses) if email_addresses else 'NA',
-            }
-        )
-
-    def parse_dom_details(self, response):
-        if response.headers.get('Content-Type'):
-            try: 
-                json_data = json.loads(response.text)
-            except:
-                json_data = {}
-        else:
-            json_data = {}
-    
-        yield {
-            'website': response.meta['domain'],
-            'url': response.meta['url'],
-            'category': response.meta['category'],
-            'report_title': response.meta['report_title'].replace(',', ' & '),
-            'email': response.meta['email'],
-            'da': json_data['mozDA'] if 'mozDA' in json_data else 'NA',
-            'pa': json_data['mozPA'] if 'mozPA' in json_data else 'NA',
-            'cf': json_data['majesticCF'] if 'majesticCF' in json_data else 'NA',
-            'tf': json_data['majesticTF'] if 'majesticTF' in json_data else 'NA',
-            'date': datetime.datetime.now().strftime("%Y-%m-%d")
-        }
+    #     yield Request(
+    #         f'http://domdetailer.com/api/checkDomain.php?domain={response.meta["domain"]}&app=DomDetailer&apikey={self.dom_detailer_api_key}&majesticChoice=root',
+    #         headers=self.headers,
+    #         callback=self.parse_dom_details,
+    #         meta={
+    #             'dont_proxy': True,
+    #             'url': response.meta['url'],
+    #             'category': response.meta['category'],
+    #             'report_title': response.meta['report_title'].replace(',', ' & '),
+    #             'domain': response.meta['domain'],
+    #             'email': ','.join(email_addresses) if email_addresses else 'NA',
+    #             'snov_io': 'Yes'
+    #         }
+    #     )
 
     # def _filter_emails(self, emails):
     #     for email in emails:
@@ -461,36 +664,37 @@ class GetEmailsSpider(scrapy.Spider):
     #                 email = re.sub(r'\s+|\[|\]', '', email)
     #                 self.email_addresses.append(email)
 
-    def _filter_emails(self, email):
-        # Extension to be ignored. If extracted email address contains any of these then ignore it
-        exts_to_ignore = ['.jpg', '.jpeg', '.png', '.gif', 'tiff', '.psd', '.pdf', '.eps', '.webpack']
-        for ext in exts_to_ignore:
-            if email.endswith(ext):
-                break
-        else:
-            (user, domain) = email.split('@')
-            # Check if domain part of the extracted email is not like user@domain eg - a@b
-            # Check if root domain of the email domain is not a number eg css@1.2.4
-            if len(domain.split('.')) > 1 and not re.match(r'\d+', domain.split('.')[-1]):
-                # Check the email string does not start with @ eg- @twitterhandle
-                if not email.startswith('@'):
-                    email = email.strip('-').strip('.')
-                    email = re.sub(r'\s+|\[|\]', '', email)
-                    self.email_addresses.append(email)
+
+    # def _filter_emails(self, email):
+    #     # Extension to be ignored. If extracted email address contains any of these then ignore it
+    #     exts_to_ignore = ['.jpg', '.jpeg', '.png', '.gif', 'tiff', '.psd', '.pdf', '.eps', '.webpack']
+    #     for ext in exts_to_ignore:
+    #         if email.endswith(ext):
+    #             break
+    #     else:
+    #         (user, domain) = email.split('@')
+    #         # Check if domain part of the extracted email is not like user@domain eg - a@b
+    #         # Check if root domain of the email domain is not a number eg css@1.2.4
+    #         if len(domain.split('.')) > 1 and not re.match(r'\d+', domain.split('.')[-1]):
+    #             # Check the email string does not start with @ eg- @twitterhandle
+    #             if not email.startswith('@'):
+    #                 email = email.strip('-').strip('.')
+    #                 email = re.sub(r'\s+|\[|\]', '', email)
+    #                 self.email_addresses.append(email)
     
-    def _read_pdf(self, response_body):
-        body = ""
-        # body = response.body.decode("utf-8", errors="ignore")
-        with open('response.pdf', 'wb') as file:
-            file.write(response_body)
-        # creating a pdf file object
-        pdfFileObj = open('response.pdf', 'rb')
-        # creating a pdf reader object
-        pdfReader = PyPDF2.PdfFileReader(pdfFileObj)
-        # Go through all the pages and extract text
-        for page_num in range(pdfReader.numPages):
-            # creating a page object
-            pageObj = pdfReader.getPage(page_num)
-            # extracting text from page
-            body += pageObj.extractText()
-        return body
+    # def _read_pdf(self, response_body):
+    #     body = ""
+    #     # body = response.body.decode("utf-8", errors="ignore")
+    #     with open('response.pdf', 'wb') as file:
+    #         file.write(response_body)
+    #     # creating a pdf file object
+    #     pdfFileObj = open('response.pdf', 'rb')
+    #     # creating a pdf reader object
+    #     pdfReader = PyPDF2.PdfFileReader(pdfFileObj)
+    #     # Go through all the pages and extract text
+    #     for page_num in range(pdfReader.numPages):
+    #         # creating a page object
+    #         pageObj = pdfReader.getPage(page_num)
+    #         # extracting text from page
+    #         body += pageObj.extractText()
+    #     return body
