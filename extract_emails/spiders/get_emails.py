@@ -44,7 +44,7 @@ class GetEmailsSpider(scrapy.Spider):
     }
 
     def __init__(self, use_db='', report_title='', use_csv='', *args, **kwargs):
-        self.logger.debug(f'use_db---------------------------------------------------------{use_db}')
+        # self.logger.debug(f'use_db---------------------------------------------------------{use_db}')
         self.logger.debug(f'report_title---------------------------------------------------------{report_title}')
         self.logger.debug(f'use_csv---------------------------------------------------------{use_csv}')
         self.urls = []
