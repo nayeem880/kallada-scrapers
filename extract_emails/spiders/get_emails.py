@@ -8,11 +8,12 @@ import re
 import requests
 import scrapy
 import time
-
 from io import StringIO
 from scrapy.http import JsonRequest
 from scrapy.http import Request
 from scrapy.selector import Selector
+
+from bs4 import BeautifulSoup
 
 
 class GetEmailsSpider(scrapy.Spider):
@@ -51,7 +52,7 @@ class GetEmailsSpider(scrapy.Spider):
         self.email_addresses = []
 
         # PRODUCTION ENV DB
-        self.client = pymongo.MongoClient("mongodb+srv://nayeem:imunbd990@cluster0.vh1iq.mongodb.net/get_email?retryWrites=true&w=majority")
+        self.client = pymongo.MongoClient("mongodb+srv://nayeem:imunbd990@cluster0.vh1iq.mongodb.net/scraper_db?retryWrites=true&w=majority")
         self.db = self.client["get_email"]
 
 
@@ -77,6 +78,7 @@ class GetEmailsSpider(scrapy.Spider):
         else:
             # Read the CSV file & fillup the self.urls list
             csv_data = pd.read_csv('guestpostscraper.out.csv')
+            print("Getting guestpostscraper -----------------------------------")
             for website_url, category, report_title in csv_data[['website_url', 'category', 'report_title']].values:
                 self.urls.append(
                     {
@@ -87,11 +89,11 @@ class GetEmailsSpider(scrapy.Spider):
                 )
 
 
-        print()
-        print()
-        print("Self urls ----------------------self urls -------------------------", self.urls)
-        print()
-        print()
+        # print()
+        # print()
+        # print("Self urls ----------------------self urls -------------------------", self.urls)
+        # print()
+        # print()
 
 
         # Open an HTTP session for google.com and set cookies
@@ -131,6 +133,7 @@ class GetEmailsSpider(scrapy.Spider):
     def start_requests(self):
         # Access each URL in the self.urls list
         for url in self.urls:
+            # print("CHECkING - ", url['url'])
             if self.is_db_data_outdated(url['url']):
                 domain = url['url'].split('/')[2].replace('www.', '')
                 yield Request(
@@ -150,9 +153,10 @@ class GetEmailsSpider(scrapy.Spider):
             if (len(self.urls) - 1) == self.urls.index(url):
                 self.logger.debug('DEBUG: Last URL of the list. Closing DB connection.')
                 self.client.close()
+                print("------------------connection closed---------------------")
+
 
     def is_db_data_outdated(self, url):
-        # here will be an error
         # data = self.db.emails.find_one({"url": url}, {'_id': 0, 'date': 1})
         data = self.db.get_email.find_one({"url": url}, {'_id': 0, 'date': 1})
         if data:
@@ -176,7 +180,7 @@ class GetEmailsSpider(scrapy.Spider):
 
 
 
-# parse callback funtion for working with response callback
+    # parse callback funtion for working with response callback
     def parse(self, response):
         try:
             body = response.text
@@ -193,6 +197,7 @@ class GetEmailsSpider(scrapy.Spider):
         # Find email addresses of the form user@domain.root
         if re.search(r"[a-z0-9\.\-+_]+\@[a-z0-9\.\-+_]+\.[a-z]+", body):
             email = re.search(r"([a-z0-9\.\-+_]+\@[a-z0-9\.\-+_]+\.[a-z]+)", body).group(1)
+            # print('FOUND EMAIL 1', email)
             # self._filter_emails(emails)
             self._filter_emails(email)
 
@@ -200,6 +205,7 @@ class GetEmailsSpider(scrapy.Spider):
         if re.search(r"[a-z0-9\.\-+_]+\s+?\@\s+?[a-z0-9\.\-+_]+\.[a-z]+", body):
             email = re.search(r"([a-z0-9\.\-+_]+\s+?\@\s+?[a-z0-9\.\-+_]+\.[a-z]+)", body).group(1)
             # self._filter_emails(emails)
+            # print('FOUND EMAIL 2', email)
             self._filter_emails(email)
 
         # Find email addresses of the form user [at] domain [dot] root
@@ -207,6 +213,8 @@ class GetEmailsSpider(scrapy.Spider):
             resp = re.sub(r'\s+\[at\]\s+', '@', body)
             resp = re.sub(r'\s+\[dot\]\s+', '.', resp)
             email = re.search(r"([a-z0-9\.\-+_]+\@[a-z0-9\.\-+_]+\.[a-z]+)", body)
+            # print('FOUND EMAIL 3', email)
+
             # self._filter_emails(emails)
             if email:
                 self._filter_emails(email.group(1))
@@ -216,13 +224,21 @@ class GetEmailsSpider(scrapy.Spider):
             resp = re.sub(r'\s+\(at\)\s+', '@', body)
             resp = re.sub(r'\s+DOT\s+', '.', resp, re.I)
             email = re.search(r"([a-z0-9\.\-+_]+\@[a-z0-9\.\-+_]+\.[a-z]+)", body)
+            # print('FOUND EMAIL 4', email)
+
             # self._filter_emails(emails)
             if email:
                 self._filter_emails(email.group(1))
 
+
+
+        # here is the google and conditional block
+        # here is the google and conditional block
         if self.email_addresses:
             # If email addresses are found then yield URL & email addresses
             unique_emails = list(dict.fromkeys([x.lower() for x in self.email_addresses]))
+
+            # print("UNIQUE EMAILS IN MAIN ", unique_emails)
             self.email_addresses = []
             yield Request(
                 f'http://domdetailer.com/api/checkDomain.php?domain={domain}&app=DomDetailer&apikey={self.dom_detailer_api_key}&majesticChoice=root',
@@ -238,6 +254,7 @@ class GetEmailsSpider(scrapy.Spider):
                     'email': unique_emails[0] if unique_emails else 'NA',
                 }
             )
+
         else:
             # Else access the URL and check if encoded emails are present.
             # If encoded emails found then decode the emails and yield
@@ -260,12 +277,13 @@ class GetEmailsSpider(scrapy.Spider):
             # Search query example - site:techristic.com "@techristic.com" contact us
             if not self.email_addresses:
                 domain = response.url.split('/')[2].replace('www.', '')
-                
-                print("NO Emails found so now searching google and domain is  --------------------------------", domain)
-                
-                url = f'https://www.google.com/search?q=site%3A{domain}+%22%40{domain}%22+contact+us&rlz=1C1GCEA_enIN901IN901&oq=site%3A{domain}+%22%40{domain}%22+contact+us&aqs=chrome..69i57j69i58.4168j0j7&sourceid=chrome&ie=UTF-8'
+                u = response.url
+                # url = f'https://www.google.com/search?q=site%3A{domain}+%22%40{domain}%22+contact+us&rlz=1C1GCEA_enIN901IN901&oq=site%3A{domain}+%22%40{domain}%22+contact+us&aqs=chrome..69i57j69i58.4168j0j7&sourceid=chrome&ie=UTF-8'
+                url = f'https://www.google.com/search?q={domain}+email'
                 headers = self.headers.copy()
                 headers.update({'authority': 'www.google.com', 'X-Crawlera-Max-Retries': 0})
+                # print("Checking GOOGLE --------------------------------", url)
+
                 yield Request(
                     url,
                     headers=headers,
@@ -279,6 +297,35 @@ class GetEmailsSpider(scrapy.Spider):
                         'domain': domain,
                     }
                 )
+
+            # print("After google search =================>>>>>>>>>>>>>", self.email_addresses)
+
+
+            if not self.email_addresses:
+                domain = response.url.split('/')[2]
+                d = response.url.split('/')
+                d1 = d[0]
+                url = d1+"//"+domain
+                # print("Checking Main  Website --------------------------------", url)
+                url = url
+                headers = self.headers.copy()
+                headers.update({'authority': 'www.google.com', 'X-Crawlera-Max-Retries': 0})
+                yield Request(
+                    url,
+                    headers=headers,
+                    callback=self.parse_website_itself,
+                    dont_filter=True,
+                    meta={
+                        'dont_proxy': True,
+                        'url': response.url,
+                        'category': response.meta['category'],
+                        'report_title': response.meta['report_title'],
+                        'domain': domain,
+                    }
+                )
+
+
+
 
             # if not self.email_addresses:
             #     domain = response.url.split('/')[2].replace('www.', '')
@@ -304,31 +351,28 @@ class GetEmailsSpider(scrapy.Spider):
             #                 'domain': domain,
             #             }
             #         )
+        
 
-    def parse_dom_details(self, response):
-        if response.headers.get('Content-Type'):
-            try: 
-                json_data = json.loads(response.text)
-            except:
-                json_data = {}
+
+    def _filter_emails(self, email):
+        # Extension to be ignored. If extracted email address contains any of these then ignore it
+        exts_to_ignore = ['.jpg', '.jpeg', '.png', '.gif', 'tiff', '.psd', '.pdf', '.eps', '.webpack']
+        # print("------------------inside filter---------------------", email)
+        for ext in exts_to_ignore:
+            if email.endswith(ext):
+                break
         else:
-            json_data = {}
+            (user, domain) = email.split('@')
+            # print("-----------------deep into filter--------------------", email)
+            # Check if domain part of the extracted email is not like user@domain eg - a@b
+            # Check if root domain of the email domain is not a number eg css@1.2.4
+            if len(domain.split('.')) > 1 and not re.match(r'\d+', domain.split('.')[-1]):
+                # Check the email string does not start with @ eg- @twitterhandle
+                if not email.startswith('@'):
+                    email = email.strip('-').strip('.')
+                    email = re.sub(r'\s+|\[|\]', '', email)
+                    self.email_addresses.append(email)
     
-        yield {
-            'website': response.meta['domain'],
-            'url': response.meta['url'],
-            'category': response.meta['category'],
-            'report_title': response.meta['report_title'].replace(',', ' & '),
-            'email': response.meta['email'],
-            'da': json_data['mozDA'] if 'mozDA' in json_data else 'NA',
-            'pa': json_data['mozPA'] if 'mozPA' in json_data else 'NA',
-            'cf': json_data['majesticCF'] if 'majesticCF' in json_data else 'NA',
-            'tf': json_data['majesticTF'] if 'majesticTF' in json_data else 'NA',
-            'date': datetime.datetime.now().strftime("%Y-%m-%d"),
-            # 'snov_io': response.meta.get('snov_io') or 'No'
-        }
-
-
 
     # Method to parse encoded email addresses
     # Emails will have a class of __cf_email__.
@@ -381,30 +425,208 @@ class GetEmailsSpider(scrapy.Spider):
             self.email_addresses = []
 
 
+    def parse_website_itself(self, response):
+        email_addresses = []
+        domain = response.meta['domain']
+        try:
+            body = response.text
+        except:
+            if response.body:
+                body = response.body.decode("utf-8", errors="ignore")
+            else:
+                body = '<html></html>'
+        # resp = Selector(text=body)
+
+        # Find email addresses of the form user@domain.root
+        if re.search(r"[a-z0-9\.\-+_]+\@[a-z0-9\.\-+_]+\.[a-z]+", body):
+            email = re.search(r"([a-z0-9\.\-+_]+\@[a-z0-9\.\-+_]+\.[a-z]+)", body).group(1)
+            # print('FOUND EMAIL 1', email)
+            self._filter_emails(email)
+
+        # Find email addresses of the form user<SPACES>@<SPACES>domain.root
+        if re.search(r"[a-z0-9\.\-+_]+\s+?\@\s+?[a-z0-9\.\-+_]+\.[a-z]+", body):
+            email = re.search(r"([a-z0-9\.\-+_]+\s+?\@\s+?[a-z0-9\.\-+_]+\.[a-z]+)", body).group(1)
+            # self._filter_emails(emails)
+            self._filter_emails(email)
+
+        # Find email addresses of the form user [at] domain [dot] root
+        if re.search(r'\[at\].*\[dot\]', body):
+            resp = re.sub(r'\s+\[at\]\s+', '@', body)
+            resp = re.sub(r'\s+\[dot\]\s+', '.', resp)
+            email = re.search(r"([a-z0-9\.\-+_]+\@[a-z0-9\.\-+_]+\.[a-z]+)", body)
+
+            # self._filter_emails(emails)
+            if email:
+                self._filter_emails(email.group(1))
+
+        # Find email addresses of the form user (at) domain (dot) root
+        if re.search(r'\(at\).*dot', body, re.I):
+            resp = re.sub(r'\s+\(at\)\s+', '@', body)
+            resp = re.sub(r'\s+DOT\s+', '.', resp, re.I)
+            email = re.search(r"([a-z0-9\.\-+_]+\@[a-z0-9\.\-+_]+\.[a-z]+)", body)
+
+            # self._filter_emails(emails)
+            if email:
+                self._filter_emails(email.group(1))
+        # print("HERE WEBSITE :", self.email_addresses)
+        if self.email_addresses:
+            print("__________________________________________________Got email inside actual website___________________________________", self.email_addresses, response.url )
+            unique_emails = list(dict.fromkeys([x.lower() for x in self.email_addresses]))
+            yield Request(
+                f'http://domdetailer.com/api/checkDomain.php?domain={response.meta["domain"]}&app=DomDetailer&apikey={self.dom_detailer_api_key}&majesticChoice=root',
+                headers=self.headers,
+                callback=self.parse_dom_details,
+                meta={
+                    'dont_proxy': True,
+                    'url': response.url,
+                    'category': response.meta['category'],
+                    'report_title': response.meta['report_title'].replace(',', ' & '),
+                    'domain': response.meta['domain'],
+                    'email': unique_emails[0] if unique_emails else 'NA',
+                }
+            )
+        else:
+            self.email_addresses = []
+            # "submit","Submit","SUBMIT","contactsales","ContactSales","CONTACTSALES","CONTACT-SALES", "contact-sales", "Contact-Sales","Contact-sales","contact-Sales","Contactsales","contactSales", "Quote","quote","QUOTE", "get-a-quote","Get-a-quote","quotes","Quotes","QUOTES"
+            sample = [ "contact","Contact","CONTACT", "contactus","ContactUs","Contactus","contactUs","CONTACTUS","contact-us","Contact-us","Contact-Us","contact-Us","CONTACT-US"]
+            soup = BeautifulSoup(body, 'html.parser') 
+            alinks = []
+            targetlinks = []
+            for link in soup.find_all('a'):
+                if link.get('href') not in alinks:
+                    alinks.append(link.get('href'))
+
+            # print("Alinks ------------------>>>> ",alinks)
+            for j in range(len(alinks)):
+                for samp in sample:
+                    if str(samp) in str(alinks[j]):
+                        temp = response.url
+                        temp1 = alinks[j]
+                        if temp in temp1:
+                            targetlinks.append(temp1)
+                        elif "https" in temp1:
+                            targetlinks.append(temp1)
+                        elif "http" in temp1:
+                            targetlinks.append(temp1)
+                        elif temp[-1] == "/" and temp1[0] == "/":
+                            l = temp[:-1]+temp1
+                            targetlinks.append(l)
+                        elif temp[-1] != "/" and temp1[0] != "/":
+                            l = temp+"/"+temp1
+                            targetlinks.append(l)
+                        else:
+                            l = temp+temp1
+                            targetlinks.append(l)
+
+            print("Target links ------------------>>>> ",targetlinks)
+
+            for tar in targetlinks:
+                yield Request(
+                url = tar,
+                headers=self.headers,
+                callback=self.parse_contact_page,
+                meta={
+                    'dont_proxy': True,
+                    'url': tar,
+                    'category': response.meta['category'],
+                    'report_title': response.meta['report_title'],
+                    'domain': domain,
+                }
+            )
+        
 
 
 
+    def parse_dom_details(self, response):
+        if response.headers.get('Content-Type'):
+            try: 
+                json_data = json.loads(response.text)
+            except:
+                json_data = {}
+        else:
+            json_data = {}
+    
+        yield {
+            'website': response.meta['domain'],
+            'url': response.meta['url'],
+            'category': response.meta['category'],
+            'report_title': response.meta['report_title'].replace(',', ' & '),
+            'email': response.meta['email'],
+            'da': json_data['mozDA'] if 'mozDA' in json_data else 'NA',
+            'pa': json_data['mozPA'] if 'mozPA' in json_data else 'NA',
+            'cf': json_data['majesticCF'] if 'majesticCF' in json_data else 'NA',
+            'tf': json_data['majesticTF'] if 'majesticTF' in json_data else 'NA',
+            'date': datetime.datetime.now().strftime("%Y-%m-%d"),
+            # 'snov_io': response.meta.get('snov_io') or 'No'
+        }
 
 
+    def parse_contact_page(self, response):
+        email_addresses = []
+        domain = response.meta['domain']
+        try:
+            body = response.text
+        except:
+            if response.body:
+                body = response.body.decode("utf-8", errors="ignore")
+            else:
+                body = '<html></html>'
+
+        # Find email addresses of the form user@domain.root
+        if re.search(r"[a-z0-9\.\-+_]+\@[a-z0-9\.\-+_]+\.[a-z]+", body):
+            email = re.search(r"([a-z0-9\.\-+_]+\@[a-z0-9\.\-+_]+\.[a-z]+)", body).group(1)
+            # print('FOUND EMAIL 1', email)
+            self._filter_emails(email)
+
+        # Find email addresses of the form user<SPACES>@<SPACES>domain.root
+        if re.search(r"[a-z0-9\.\-+_]+\s+?\@\s+?[a-z0-9\.\-+_]+\.[a-z]+", body):
+            email = re.search(r"([a-z0-9\.\-+_]+\s+?\@\s+?[a-z0-9\.\-+_]+\.[a-z]+)", body).group(1)
+            # self._filter_emails(emails)
+            self._filter_emails(email)
+
+        # Find email addresses of the form user [at] domain [dot] root
+        if re.search(r'\[at\].*\[dot\]', body):
+            resp = re.sub(r'\s+\[at\]\s+', '@', body)
+            resp = re.sub(r'\s+\[dot\]\s+', '.', resp)
+            email = re.search(r"([a-z0-9\.\-+_]+\@[a-z0-9\.\-+_]+\.[a-z]+)", body)
+
+            # self._filter_emails(emails)
+            if email:
+                self._filter_emails(email.group(1))
+
+        # Find email addresses of the form user (at) domain (dot) root
+        if re.search(r'\(at\).*dot', body, re.I):
+            resp = re.sub(r'\s+\(at\)\s+', '@', body)
+            resp = re.sub(r'\s+DOT\s+', '.', resp, re.I)
+            email = re.search(r"([a-z0-9\.\-+_]+\@[a-z0-9\.\-+_]+\.[a-z]+)", body)
+
+            # self._filter_emails(emails)
+            if email:
+                self._filter_emails(email.group(1))
 
 
+        if self.email_addresses:
+            print("__________________________________________________Got email in contact page ___________________________________", self.email_addresses, response.url)
+            unique_emails = list(dict.fromkeys([x.lower() for x in self.email_addresses]))
+            # print("UNIQUE EMAILS IN GOOGLE SEARCH ", unique_emails)
+            yield Request(
+                f'http://domdetailer.com/api/checkDomain.php?domain={response.meta["domain"]}&app=DomDetailer&apikey={self.dom_detailer_api_key}&majesticChoice=root',
+                headers=self.headers,
+                callback=self.parse_dom_details,
+                meta={
+                    'dont_proxy': True,
+                    'url': response.url,
+                    'category': response.meta['category'],
+                    'report_title': response.meta['report_title'].replace(',', ' & '),
+                    'domain': response.meta['domain'],
+                    'email': unique_emails[0] if unique_emails else 'NA',
+                }
+            )
+        else:
+            self.email_addresses = []
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-            
-
+   
     # Method to parse google search results
     # Each google search results will be stored under a span of class "st"
     # Modify this method to enhance google search results.
@@ -419,29 +641,52 @@ class GetEmailsSpider(scrapy.Spider):
                 body = response.body.decode("utf-8", errors="ignore")
             else:
                 body = '<html></html>'
-        resp = Selector(text=body)
+        # resp = Selector(text=body)
 
-        if resp.xpath('//span[@class="st"]/text()'):
-            for data in resp.xpath('//span[@class="st"]/text()').getall():
-                if '@' in data:
-                    for word in data.split():
-                        if '@' in word:
-                            if not re.search(r"[a-z0-9\.\-+_]+\@[a-z0-9\.\-+_]+\.[a-z]+", word):
-                                email = word + domain
-                            else:
-                                email = word
-                            (user, domain) = email.split('@')
-                            if len(domain.split('.')) != 1 and not re.match(r'\d+', domain.split('.')[-1]):
-                                if not email.startswith('@'):
-                                    email = email.strip('-').strip('.')
-                                    email = re.sub(r'\s+|\[|\]', '', email)
-                                    email_addresses.append(email)
-                    if not email_addresses:
-                        self.logger.debug(
-                            f'ERROR: Email not found in Google search - {response.url}')
+        # print()
+        # print()
+        # # print("BODY OF DOMANI:", domain, body)
+        # print()
+        # print()
 
-        if email_addresses:
-            unique_emails = list(dict.fromkeys([x.lower() for x in email_addresses]))
+        # Find email addresses of the form user@domain.root
+        if re.search(r"[a-z0-9\.\-+_]+\@[a-z0-9\.\-+_]+\.[a-z]+", body):
+            email = re.search(r"([a-z0-9\.\-+_]+\@[a-z0-9\.\-+_]+\.[a-z]+)", body).group(1)
+            # print('FOUND EMAIL 1', email)
+            self._filter_emails(email)
+
+        # Find email addresses of the form user<SPACES>@<SPACES>domain.root
+        if re.search(r"[a-z0-9\.\-+_]+\s+?\@\s+?[a-z0-9\.\-+_]+\.[a-z]+", body):
+            email = re.search(r"([a-z0-9\.\-+_]+\s+?\@\s+?[a-z0-9\.\-+_]+\.[a-z]+)", body).group(1)
+            # self._filter_emails(emails)
+            self._filter_emails(email)
+
+        # Find email addresses of the form user [at] domain [dot] root
+        if re.search(r'\[at\].*\[dot\]', body):
+            resp = re.sub(r'\s+\[at\]\s+', '@', body)
+            resp = re.sub(r'\s+\[dot\]\s+', '.', resp)
+            email = re.search(r"([a-z0-9\.\-+_]+\@[a-z0-9\.\-+_]+\.[a-z]+)", body)
+
+            # self._filter_emails(emails)
+            if email:
+                self._filter_emails(email.group(1))
+
+        # Find email addresses of the form user (at) domain (dot) root
+        if re.search(r'\(at\).*dot', body, re.I):
+            resp = re.sub(r'\s+\(at\)\s+', '@', body)
+            resp = re.sub(r'\s+DOT\s+', '.', resp, re.I)
+            email = re.search(r"([a-z0-9\.\-+_]+\@[a-z0-9\.\-+_]+\.[a-z]+)", body)
+
+            # self._filter_emails(emails)
+            if email:
+                self._filter_emails(email.group(1))
+
+        # print("HERE GOOGLE", self.email_addresses)
+
+        if self.email_addresses:
+            print("__________________________________________________Got email in GOOGLE SEARCH ___________________________________", self.email_addresses, response.url)
+            unique_emails = list(dict.fromkeys([x.lower() for x in self.email_addresses]))
+            # print("UNIQUE EMAILS IN GOOGLE SEARCH ", unique_emails)
             yield Request(
                 f'http://domdetailer.com/api/checkDomain.php?domain={response.meta["domain"]}&app=DomDetailer&apikey={self.dom_detailer_api_key}&majesticChoice=root',
                 headers=self.headers,
@@ -458,30 +703,7 @@ class GetEmailsSpider(scrapy.Spider):
         else:
             self.email_addresses = []
 
-    
 
-
-
-
-
-
-    def _filter_emails(self, email):
-        # Extension to be ignored. If extracted email address contains any of these then ignore it
-        exts_to_ignore = ['.jpg', '.jpeg', '.png', '.gif', 'tiff', '.psd', '.pdf', '.eps', '.webpack']
-        for ext in exts_to_ignore:
-            if email.endswith(ext):
-                break
-        else:
-            (user, domain) = email.split('@')
-            # Check if domain part of the extracted email is not like user@domain eg - a@b
-            # Check if root domain of the email domain is not a number eg css@1.2.4
-            if len(domain.split('.')) > 1 and not re.match(r'\d+', domain.split('.')[-1]):
-                # Check the email string does not start with @ eg- @twitterhandle
-                if not email.startswith('@'):
-                    email = email.strip('-').strip('.')
-                    email = re.sub(r'\s+|\[|\]', '', email)
-                    self.email_addresses.append(email)
-    
     
     def _read_pdf(self, response_body):
         body = ""
