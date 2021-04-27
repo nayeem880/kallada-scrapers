@@ -103,9 +103,9 @@ class GetEmailsSpider(scrapy.Spider):
         self.headers.update({'cookie': self.cookie})
 
         # we are going to limit the use of snov io access for limiting the cost
-        # self.snovio_access_token = self._get_snovio_access_token()
-        # if not self.snovio_access_token:
-        #     self.logger.debug("ERROR: SNOVIO Access Token is not available. SNOVIO requests will be skipped.")
+        self.snovio_access_token = self._get_snovio_access_token()
+        if not self.snovio_access_token:
+            self.logger.debug("ERROR: SNOVIO Access Token is not available. SNOVIO requests will be skipped.")
 
     def _get_cookie(self):
         cookies = []
@@ -115,24 +115,26 @@ class GetEmailsSpider(scrapy.Spider):
         self.logger.debug('[INFO]  Cookie: %s -----------------------------------------------' % cookie)
         return cookie
 
-    # def _get_snovio_access_token(self):
-    #     data = {
-    #         "grant_type":"client_credentials",
-    #         "client_id":"97fc7cadbba633d0c17a833e6dfccaff",
-    #         "client_secret":"0eed64cb98e69a1735179fcee427a6cc"
-    #     }
-    #     response = requests.post('https://api.snov.io/v1/oauth/access_token', json=data)
-    #     access_token = None
-    #     if response.status_code == 200:
-    #         access_token = response.json().get('access_token')
 
-    #     self.logger.debug(f"DEBUG: SnovIO Access Token - {access_token}")
-    #     return access_toke
+    def _get_snovio_access_token(self):
+        data = {
+            "grant_type":"client_credentials",
+            "client_id":"97fc7cadbba633d0c17a833e6dfccaff",
+            "client_secret":"0eed64cb98e69a1735179fcee427a6cc"
+        }
+        response = requests.post('https://api.snov.io/v1/oauth/access_token', json=data)
+        access_token = None
+        if response.status_code == 200:
+            print("--------------------------snov io --------------------------- succeed")
+            access_token = response.json().get('access_token')
+
+        self.logger.debug(f"DEBUG: SnovIO Access Token - {access_token}")
+        return access_toke
     
 
     def start_requests(self):
         # Access each URL in the self.urls list
-        for url in self.urls:
+        for url in self.urls[:10]:
             # print("CHECkING - ", url['url'])
             if self.is_db_data_outdated(url['url']):
                 domain = url['url'].split('/')[2].replace('www.', '')
@@ -327,31 +329,31 @@ class GetEmailsSpider(scrapy.Spider):
 
 
 
-
-            # if not self.email_addresses:
-            #     domain = response.url.split('/')[2].replace('www.', '')
-            #     # Query snovio API for 100 email records of all type
-            #     params = {
-            #         "domain": domain,
-            #         "type": "all",
-            #         "offset": 0,
-            #         "limit": 100
-            #     }
-            #     if self.snovio_access_token:
-            #         yield JsonRequest(
-            #             'https://api.snov.io/v1/get-domain-emails-with-info',
-            #             method='POST',
-            #             headers={'Authorization': f'Bearer {self.snovio_access_token}'},
-            #             data=params,
-            #             callback=self.parse_snovio_response,
-            #             dont_filter=True,
-            #             meta={
-            #                 'url': response.url,
-            #                 'category': response.meta['category'],
-            #                 'report_title': response.meta['report_title'],
-            #                 'domain': domain,
-            #             }
-            #         )
+            # snov io api key for getting email
+            if not self.email_addresses:
+                domain = response.url.split('/')[2].replace('www.', '')
+                # Query snovio API for 100 email records of all type
+                params = {
+                    "domain": domain,
+                    "type": "all",
+                    "offset": 0,
+                    "limit": 100
+                }
+                if self.snovio_access_token:
+                    yield JsonRequest(
+                        'https://api.snov.io/v1/get-domain-emails-with-info',
+                        method='POST',
+                        headers={'Authorization': f'Bearer {self.snovio_access_token}'},
+                        data=params,
+                        callback=self.parse_snovio_response,
+                        dont_filter=True,
+                        meta={
+                            'url': response.url,
+                            'category': response.meta['category'],
+                            'report_title': response.meta['report_title'],
+                            'domain': domain,
+                        }
+                    )
         
 
 
@@ -712,6 +714,38 @@ class GetEmailsSpider(scrapy.Spider):
             self.email_addresses = []
 
 
+
+    # Method to parse SNOVIO API response
+    # API query is sent to search for all type of emails ie: personal + generic
+    # First item from each list is picked and joined as a string
+    def parse_snovio_response(self, response):
+        self.email_addresses = []
+        if response.status == 200:
+            json_data = response.json()
+            self.logger.debug('DEBUG: SNOVIO API Response')
+            self.logger.debug(json_data)
+            if json_data['result']:
+                personal_emails = [x for x in json_data['emails'] if "firstName" in x]
+                generic_emails = [x for x in json_data['emails'] if "firstName" not in x]
+                if personal_emails:
+                    self.email_addresses.append(personal_emails[0].get('email'))
+                if generic_emails:
+                    self.email_addresses.append(generic_emails[0].get('email'))
+
+        yield Request(
+            f'http://domdetailer.com/api/checkDomain.php?domain={response.meta["domain"]}&app=DomDetailer&apikey={self.dom_detailer_api_key}&majesticChoice=root',
+            headers=self.headers,
+            callback=self.parse_dom_details,
+            meta={
+                'dont_proxy': True,
+                'url': response.meta['url'],
+                'category': response.meta['category'],
+                'report_title': response.meta['report_title'].replace(',', ' & '),
+                'domain': response.meta['domain'],
+                'email': ','.join(self.email_addresses) if self.email_addresses else 'NA',
+                'snov_io': 'Yes'
+            }
+        )
     
     def _read_pdf(self, response_body):
         body = ""
