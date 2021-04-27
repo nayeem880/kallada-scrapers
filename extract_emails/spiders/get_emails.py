@@ -51,8 +51,8 @@ class GetEmailsSpider(scrapy.Spider):
         self.urls = []
         self.email_addresses = []
 
-        # PRODUCTION ENV DB
-        self.client = pymongo.MongoClient("mongodb+srv://nayeem:imunbd990@cluster0.vh1iq.mongodb.net/scraper_db?retryWrites=true&w=majority")
+        PRODUCTION ENV DB
+        self.client = pymongo.MongoClient('mongodb+srv://admin-santhej:test1234@cluster0.3dv1a.mongodb.net/retryWrites=true&w=majority')
         self.db = self.client["get_email"]
 
 
