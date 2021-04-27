@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-
-# Define your item pipelines here
-#
-# Don't forget to add your pipeline to the ITEM_PIPELINES setting
-# See: https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 import datetime
 import os
 import pymongo
@@ -15,17 +9,20 @@ class ExtractEmailsPipeline(object):
         if spider.name == 'get_emails':
             if os.path.isfile('get_emails.csv'):
                 os.remove('get_emails.csv')
+                print("==================== removing csv file and creating one ======================")
             self.collection_name = 'get_email'
-
 
         if spider.name == 'guestpostscraper':
             if os.path.isfile('guestpostscraper.csv'):
                 os.remove('guestpostscraper.csv')
             self.collection_name = 'scraper_db'
+
+            
         print("=============================================collection name", self.collection_name)
         # PRODUCTION DB INFO
         self.client = pymongo.MongoClient("mongodb+srv://nayeem:imunbd990@cluster0.vh1iq.mongodb.net/scraper_db?retryWrites=true&w=majority")
-        self.db = self.client["scraper_db"]
+        print("Connecting database to -------------------------------", self.collection_name)
+        self.db = self.client[self.collection_name]
         
         # DEVELOPMENT ENV DB INFO
         # self.client = pymongo.MongoClient('mongodb://localhost:27017')
@@ -44,7 +41,7 @@ class ExtractEmailsPipeline(object):
                 elif item['tf'] == 'NA':
                     print(f'ERROR: Skipping db insertion because TF for {item["website"]} was not found')
                 else:
-                    # print(f'get_emails db Insert -> {item}')
+                    # print(f'get_emails db Insert --------------->>>>>>---------> {item}')
                     self.db[self.collection_name].update_one(
                         {"url": item["url"]}, {"$set": item}, upsert=True
                     )
@@ -72,5 +69,4 @@ class ExtractEmailsPipeline(object):
             if os.path.isfile('guestpostscraper.csv'):
                 print("YOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO+==============================")
                 shutil.copyfile('guestpostscraper.csv', 'guestpostscraper.out.csv')
-
         self.client.close()
