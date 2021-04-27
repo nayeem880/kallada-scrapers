@@ -141,7 +141,7 @@ class GetEmailsSpider(scrapy.Spider):
                     callback=self.parse,
                     headers=self.headers,
                     meta={
-                        'dont_proxy': True,
+                        # 'dont_proxy': True,
                         'domain': domain,
                         'category': url['category'],
                         'report_title': url['report_title']
@@ -173,7 +173,6 @@ class GetEmailsSpider(scrapy.Spider):
         else:
             self.logger.debug(f'DEBUG: No data found in db. ------------------------------------------------ Fetching from web')
             return True
-
 
 
 
@@ -238,14 +237,16 @@ class GetEmailsSpider(scrapy.Spider):
             # If email addresses are found then yield URL & email addresses
             unique_emails = list(dict.fromkeys([x.lower() for x in self.email_addresses]))
 
-            # print("UNIQUE EMAILS IN MAIN ", unique_emails)
+
+
+            print("-----------------------------------------got emails in first site----------------------------- ", self.email_addresses, response.url, unique_emails)
             self.email_addresses = []
             yield Request(
                 f'http://domdetailer.com/api/checkDomain.php?domain={domain}&app=DomDetailer&apikey={self.dom_detailer_api_key}&majesticChoice=root',
                 headers=self.headers,
                 callback=self.parse_dom_details,
                 meta={
-                    'dont_proxy': True,
+                    # 'dont_proxy': True,
                     'url': response.url,
                     'category': response.meta['category'],
                     'report_title': response.meta['report_title'],
@@ -264,7 +265,7 @@ class GetEmailsSpider(scrapy.Spider):
                 callback=self.parse_encoded_email,
                 dont_filter=True,
                 meta={
-                    'dont_proxy': True,
+                    # 'dont_proxy': True,
                     'url': response.url,
                     'category': response.meta['category'],
                     'report_title': response.meta['report_title'],
@@ -316,7 +317,7 @@ class GetEmailsSpider(scrapy.Spider):
                     callback=self.parse_website_itself,
                     dont_filter=True,
                     meta={
-                        'dont_proxy': True,
+                        # 'dont_proxy': True,
                         'url': response.url,
                         'category': response.meta['category'],
                         'report_title': response.meta['report_title'],
@@ -406,14 +407,14 @@ class GetEmailsSpider(scrapy.Spider):
                     else:
                         self.logger.debug(f'ERROR: Decoded Email not found - {response.url}')
 
-
+            print("-----------------------------------------got encoded emails----------------------------- ", self.email_addresses, response.url)
             unique_emails = list(dict.fromkeys([x.lower() for x in self.email_addresses]))
             yield Request(
                 f'http://domdetailer.com/api/checkDomain.php?domain={response.meta["domain"]}&app=DomDetailer&apikey={self.dom_detailer_api_key}&majesticChoice=root',
                 headers=self.headers,
                 callback=self.parse_dom_details,
                 meta={
-                    'dont_proxy': True,
+                    # 'dont_proxy': True,
                     'url': response.meta['url'],
                     'category': response.meta['category'],
                     'report_title': response.meta['report_title'].replace(',', ' & '),
@@ -477,7 +478,7 @@ class GetEmailsSpider(scrapy.Spider):
                 headers=self.headers,
                 callback=self.parse_dom_details,
                 meta={
-                    'dont_proxy': True,
+                    # 'dont_proxy': True,
                     'url': response.url,
                     'category': response.meta['category'],
                     'report_title': response.meta['report_title'].replace(',', ' & '),
@@ -503,20 +504,27 @@ class GetEmailsSpider(scrapy.Spider):
                         temp = response.url
                         temp1 = alinks[j]
                         if temp in temp1:
-                            targetlinks.append(temp1)
+                            if temp1 not in targetlinks:
+                                targetlinks.append(temp1)
                         elif "https" in temp1:
-                            targetlinks.append(temp1)
+                            if temp1 not in targetlinks:
+                                targetlinks.append(temp1)
                         elif "http" in temp1:
-                            targetlinks.append(temp1)
+                            if temp1 not in targetlinks:
+                                targetlinks.append(temp1)
                         elif temp[-1] == "/" and temp1[0] == "/":
                             l = temp[:-1]+temp1
-                            targetlinks.append(l)
+                            if l not in targetlinks:
+                                targetlinks.append(l)
                         elif temp[-1] != "/" and temp1[0] != "/":
                             l = temp+"/"+temp1
-                            targetlinks.append(l)
+                            if l not in targetlinks:
+                                targetlinks.append(l)
                         else:
                             l = temp+temp1
-                            targetlinks.append(l)
+                            if l not in targetlinks:
+                                targetlinks.append(l)
+
 
             print("Target links ------------------>>>> ",targetlinks)
 
@@ -526,7 +534,7 @@ class GetEmailsSpider(scrapy.Spider):
                 headers=self.headers,
                 callback=self.parse_contact_page,
                 meta={
-                    'dont_proxy': True,
+                    # 'dont_proxy': True,
                     'url': tar,
                     'category': response.meta['category'],
                     'report_title': response.meta['report_title'],
@@ -614,7 +622,7 @@ class GetEmailsSpider(scrapy.Spider):
                 headers=self.headers,
                 callback=self.parse_dom_details,
                 meta={
-                    'dont_proxy': True,
+                    # 'dont_proxy': True,
                     'url': response.url,
                     'category': response.meta['category'],
                     'report_title': response.meta['report_title'].replace(',', ' & '),
@@ -692,7 +700,7 @@ class GetEmailsSpider(scrapy.Spider):
                 headers=self.headers,
                 callback=self.parse_dom_details,
                 meta={
-                    'dont_proxy': True,
+                    # 'dont_proxy': True,
                     'url': response.meta['url'],
                     'category': response.meta['category'],
                     'report_title': response.meta['report_title'].replace(',', ' & '),
