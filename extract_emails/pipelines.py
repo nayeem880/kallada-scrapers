@@ -59,7 +59,6 @@ class ExtractEmailsPipeline(object):
 
 
 
-
     def close_spider(self, spider):
         if spider.name == 'get_emails':
             if os.path.isfile('get_emails.csv'):
