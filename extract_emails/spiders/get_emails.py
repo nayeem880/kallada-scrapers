@@ -125,16 +125,16 @@ class GetEmailsSpider(scrapy.Spider):
         response = requests.post('https://api.snov.io/v1/oauth/access_token', json=data)
         access_token = None
         if response.status_code == 200:
-            print("--------------------------snov io --------------------------- succeed")
+            print("-------------------------- snov io --------------------------- succeed")
             access_token = response.json().get('access_token')
 
         self.logger.debug(f"DEBUG: SnovIO Access Token - {access_token}")
-        return access_toke
+        return access_token
     
 
     def start_requests(self):
         # Access each URL in the self.urls list
-        for url in self.urls[:10]:
+        for url in self.urls[:20]:
             # print("CHECkING - ", url['url'])
             if self.is_db_data_outdated(url['url']):
                 domain = url['url'].split('/')[2].replace('www.', '')
@@ -340,6 +340,7 @@ class GetEmailsSpider(scrapy.Spider):
                     "limit": 100
                 }
                 if self.snovio_access_token:
+                    print('------------------------------------------- sending snov io ---------------------------------------------', domain, self.snovio_access_token)
                     yield JsonRequest(
                         'https://api.snov.io/v1/get-domain-emails-with-info',
                         method='POST',
@@ -719,7 +720,8 @@ class GetEmailsSpider(scrapy.Spider):
     # API query is sent to search for all type of emails ie: personal + generic
     # First item from each list is picked and joined as a string
     def parse_snovio_response(self, response):
-        self.email_addresses = []
+        email_addresses = []
+        print("RESPONE IS ", response.status)
         if response.status == 200:
             json_data = response.json()
             self.logger.debug('DEBUG: SNOVIO API Response')
@@ -728,21 +730,21 @@ class GetEmailsSpider(scrapy.Spider):
                 personal_emails = [x for x in json_data['emails'] if "firstName" in x]
                 generic_emails = [x for x in json_data['emails'] if "firstName" not in x]
                 if personal_emails:
-                    self.email_addresses.append(personal_emails[0].get('email'))
+                    email_addresses.append(personal_emails[0].get('email'))
                 if generic_emails:
-                    self.email_addresses.append(generic_emails[0].get('email'))
+                    email_addresses.append(generic_emails[0].get('email'))
 
         yield Request(
             f'http://domdetailer.com/api/checkDomain.php?domain={response.meta["domain"]}&app=DomDetailer&apikey={self.dom_detailer_api_key}&majesticChoice=root',
             headers=self.headers,
             callback=self.parse_dom_details,
             meta={
-                'dont_proxy': True,
+                # 'dont_proxy': True,
                 'url': response.meta['url'],
                 'category': response.meta['category'],
                 'report_title': response.meta['report_title'].replace(',', ' & '),
                 'domain': response.meta['domain'],
-                'email': ','.join(self.email_addresses) if self.email_addresses else 'NA',
+                'email': ','.join(email_addresses) if email_addresses else 'NA',
                 'snov_io': 'Yes'
             }
         )
