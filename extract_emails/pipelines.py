@@ -5,31 +5,27 @@ import shutil
 
 class ExtractEmailsPipeline(object):
     collection_name = ""
+    
     def open_spider(self, spider):
         if spider.name == 'get_emails':
             if os.path.isfile('get_emails.csv'):
                 os.remove('get_emails.csv')
                 print("==================== removing csv file and creating one ======================")
-            self.collection_name = 'get_email'
+            # self.collection_name = 'get_email'
 
         if spider.name == 'guestpostscraper':
             if os.path.isfile('guestpostscraper.csv'):
                 os.remove('guestpostscraper.csv')
-            self.collection_name = 'scraper_db'
+            # self.collection_name = 'scraper_db'
+        self.client = pymongo.MongoClient("mongodb+srv://nayeem:imunbd990@cluster0.vh1iq.mongodb.net/bloggerhit?retryWrites=true&w=majority")
 
-            
-        print("=============================================collection name", self.collection_name)
-        # PRODUCTION DB INFO
-        self.client = pymongo.MongoClient("mongodb+srv://nayeem:imunbd990@cluster0.vh1iq.mongodb.net/scraper_db?retryWrites=true&w=majority")
-        print("Connecting database to -------------------------------", self.collection_name)
-        self.db = self.client[self.collection_name]
-        
-        # DEVELOPMENT ENV DB INFO
-        # self.client = pymongo.MongoClient('mongodb://localhost:27017')
-        # self.db = self.client["scraper_db"]
-
+       
 
     def process_item(self, item, spider):
+        # PRODUCTION DB INFO
+        # print("Connecting database to -------------------------------", self.collection_name)
+        self.db = self.client[item["user"]]
+
         if spider.name == 'get_emails':
             if item['email'] != 'NA':
                 if item['da'] == 'NA':
@@ -42,7 +38,7 @@ class ExtractEmailsPipeline(object):
                     print(f'ERROR: Skipping db insertion because TF for {item["website"]} was not found')
                 else:
                     # print(f'get_emails db Insert --------------->>>>>>---------> {item}')
-                    self.db[self.collection_name].update_one(
+                    self.db[item["report_title"]].update_one(
                         {"url": item["url"]}, {"$set": item}, upsert=True
                     )
             else:
@@ -50,8 +46,9 @@ class ExtractEmailsPipeline(object):
 
         # if the spider is guestpostscraper then insert to gostpostscraper mongodb
         else:
-            print(f'guestpostscraper bb Insert -> {item}')
-            self.db[self.collection_name].update_one(
+            #print(f'guestpostscraper bb Insert -> {item}')
+            # self.db[self.collection_name].update_one(
+            self.db[item["report_title"]].update_one(
                 {"website_url": item["website_url"]}, {"$set": item}, upsert=True
             )
         return item
