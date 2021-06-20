@@ -12,11 +12,11 @@ from io import StringIO
 from scrapy.http import JsonRequest
 from scrapy.http import Request
 from scrapy.selector import Selector
-
 from bs4 import BeautifulSoup
 
 
 class GetEmailsSpider(scrapy.Spider):
+    REPORT_TITLE = ''
     name = 'get_emails'
     headers = {
         'pragma': 'no-cache',
@@ -31,6 +31,7 @@ class GetEmailsSpider(scrapy.Spider):
         'sec-fetch-dest': 'document',
         'accept-language': 'en-US,en;q=0.9',
     }
+    
     dom_detailer_api_key = '5SUT34180BBFG'
     custom_settings = {
         'FEEDS': {
@@ -44,21 +45,25 @@ class GetEmailsSpider(scrapy.Spider):
         },
     }
 
-    def __init__(self, use_db='', report_title='', use_csv='', *args, **kwargs):
+    def __init__(self, use_db='', report_title='', use_csv='', user="", *args, **kwargs):
         # self.logger.debug(f'use_db---------------------------------------------------------{use_db}')
         self.logger.debug(f'report_title---------------------------------------------------------{report_title}')
         self.logger.debug(f'use_csv---------------------------------------------------------{use_csv}')
         self.urls = []
         self.email_addresses = []
+        self.REPORT_TITLE = report_title
 
         # PRODUCTION ENV DB
         self.client = pymongo.MongoClient("mongodb+srv://nayeem:imunbd990@cluster0.vh1iq.mongodb.net/scraper_db?retryWrites=true&w=majority")
-        self.db = self.client["get_email"]
+        self.db = self.client[user]
 
 
         # use_db will be true when user uploads a CSV file while running this spider
         # or choose to run both the spiders together
         if use_db == 'true':
+            print()
+            print("HERE ")
+            print()
             if use_csv == 'true':
                 self.logger.debug('DEBUG: Looking for user uploaded URLs in DB')
                 url_data = self.db.uploadedcsvs.find({}, {'_id': 0, 'website_url': 1})
@@ -76,29 +81,30 @@ class GetEmailsSpider(scrapy.Spider):
                     }
                 )
         else:
+            print("ELSE ________________________")
             # Read the CSV file & fillup the self.urls list
             csv_data = pd.read_csv('guestpostscraper.out.csv')
-            print("Getting guestpostscraper -----------------------------------")
-            for website_url, category, report_title in csv_data[['website_url', 'category', 'report_title']].values:
+            # print("Getting guestpostscraper -----------------------------------")
+            for website_url, category, user in csv_data[['website_url', 'category', 'user']].values:
                 self.urls.append(
                     {
                         'url': website_url.strip(),
                         'category': category.strip(),
-                        'report_title': report_title.strip()
+                        'report_title': self.REPORT_TITLE.strip(),
+                        'user': user.strip()
                     }
                 )
 
-
         # print()
         # print()
-        # print("Self urls ----------------------self urls -------------------------", self.urls)
+        print("Self urls ----------------------self urls -------------------------", len(self.urls))
         # print()
         # print()
 
 
         # Open an HTTP session for google.com and set cookies
         self.session = requests.Session()
-        self.session.get('https://www.google.com/search', headers=self.headers,)
+        self.session.get('https://www.google.com/search', headers=self.headers)
         self.cookie = self._get_cookie()
         self.headers.update({'cookie': self.cookie})
 
@@ -125,7 +131,7 @@ class GetEmailsSpider(scrapy.Spider):
         response = requests.post('https://api.snov.io/v1/oauth/access_token', json=data)
         access_token = None
         if response.status_code == 200:
-            print("-------------------------- snov io --------------------------- succeed")
+            print("--------------------------snov io --------------------------- succeed")
             access_token = response.json().get('access_token')
 
         self.logger.debug(f"DEBUG: SnovIO Access Token - {access_token}")
@@ -134,8 +140,9 @@ class GetEmailsSpider(scrapy.Spider):
 
     def start_requests(self):
         # Access each URL in the self.urls list
-        for url in self.urls[:20]:
-            # print("CHECkING - ", url['url'])
+        for url in self.urls:
+            print("CHECkING - ", url['url'])
+
             if self.is_db_data_outdated(url['url']):
                 domain = url['url'].split('/')[2].replace('www.', '')
                 yield Request(
@@ -146,7 +153,8 @@ class GetEmailsSpider(scrapy.Spider):
                         # 'dont_proxy': True,
                         'domain': domain,
                         'category': url['category'],
-                        'report_title': url['report_title']
+                        'report_title': url['report_title'],
+                        'user': url['user']
                     }
                 )
 
@@ -253,6 +261,7 @@ class GetEmailsSpider(scrapy.Spider):
                     'category': response.meta['category'],
                     'report_title': response.meta['report_title'],
                     # response.meta['domain']
+                    'user': response.meta['user'],
                     'domain': domain,   
                     'email': unique_emails[0] if unique_emails else 'NA',
                 }
@@ -273,6 +282,7 @@ class GetEmailsSpider(scrapy.Spider):
                     'report_title': response.meta['report_title'],
                     # response.meta['domain']
                     'domain': domain,
+                    'user': response.meta['user'],
                 }
             )
 
@@ -298,6 +308,7 @@ class GetEmailsSpider(scrapy.Spider):
                         'report_title': response.meta['report_title'],
                         # response.meta['domain']
                         'domain': domain,
+                        'user': response.meta['user'],
                     }
                 )
 
@@ -324,6 +335,7 @@ class GetEmailsSpider(scrapy.Spider):
                         'category': response.meta['category'],
                         'report_title': response.meta['report_title'],
                         'domain': domain,
+                        'user': response.meta['user'],
                     }
                 )
 
@@ -340,7 +352,6 @@ class GetEmailsSpider(scrapy.Spider):
                     "limit": 100
                 }
                 if self.snovio_access_token:
-                    print('------------------------------------------- sending snov io ---------------------------------------------', domain, self.snovio_access_token)
                     yield JsonRequest(
                         'https://api.snov.io/v1/get-domain-emails-with-info',
                         method='POST',
@@ -353,6 +364,7 @@ class GetEmailsSpider(scrapy.Spider):
                             'category': response.meta['category'],
                             'report_title': response.meta['report_title'],
                             'domain': domain,
+                            'user': response.meta['user'],
                         }
                     )
         
@@ -483,6 +495,7 @@ class GetEmailsSpider(scrapy.Spider):
                 meta={
                     # 'dont_proxy': True,
                     'url': response.url,
+                    'user': response.meta['user'],
                     'category': response.meta['category'],
                     'report_title': response.meta['report_title'].replace(',', ' & '),
                     'domain': response.meta['domain'],
@@ -542,6 +555,8 @@ class GetEmailsSpider(scrapy.Spider):
                     'category': response.meta['category'],
                     'report_title': response.meta['report_title'],
                     'domain': domain,
+                    'user': response.meta['user'],
+
                 }
             )
         
@@ -562,6 +577,7 @@ class GetEmailsSpider(scrapy.Spider):
             'url': response.meta['url'],
             'category': response.meta['category'],
             'report_title': response.meta['report_title'].replace(',', ' & '),
+            'user': response.meta['user'],
             'email': response.meta['email'],
             'da': json_data['mozDA'] if 'mozDA' in json_data else 'NA',
             'pa': json_data['mozPA'] if 'mozPA' in json_data else 'NA',
@@ -631,6 +647,7 @@ class GetEmailsSpider(scrapy.Spider):
                     'report_title': response.meta['report_title'].replace(',', ' & '),
                     'domain': response.meta['domain'],
                     'email': unique_emails[0] if unique_emails else 'NA',
+                    'user': response.meta['user'],
                 }
             )
         else:
@@ -709,6 +726,8 @@ class GetEmailsSpider(scrapy.Spider):
                     'report_title': response.meta['report_title'].replace(',', ' & '),
                     'domain': response.meta['domain'],
                     'email': unique_emails[0] if unique_emails else 'NA',
+                    'user': response.meta['user'],
+
                 }
             )
         else:
@@ -720,8 +739,7 @@ class GetEmailsSpider(scrapy.Spider):
     # API query is sent to search for all type of emails ie: personal + generic
     # First item from each list is picked and joined as a string
     def parse_snovio_response(self, response):
-        email_addresses = []
-        print("RESPONE IS ", response.status)
+        self.email_addresses = []
         if response.status == 200:
             json_data = response.json()
             self.logger.debug('DEBUG: SNOVIO API Response')
@@ -730,21 +748,22 @@ class GetEmailsSpider(scrapy.Spider):
                 personal_emails = [x for x in json_data['emails'] if "firstName" in x]
                 generic_emails = [x for x in json_data['emails'] if "firstName" not in x]
                 if personal_emails:
-                    email_addresses.append(personal_emails[0].get('email'))
+                    self.email_addresses.append(personal_emails[0].get('email'))
                 if generic_emails:
-                    email_addresses.append(generic_emails[0].get('email'))
+                    self.email_addresses.append(generic_emails[0].get('email'))
 
         yield Request(
             f'http://domdetailer.com/api/checkDomain.php?domain={response.meta["domain"]}&app=DomDetailer&apikey={self.dom_detailer_api_key}&majesticChoice=root',
             headers=self.headers,
             callback=self.parse_dom_details,
             meta={
-                # 'dont_proxy': True,
+                'dont_proxy': True,
                 'url': response.meta['url'],
                 'category': response.meta['category'],
                 'report_title': response.meta['report_title'].replace(',', ' & '),
+                'user': response.meta['user'],
                 'domain': response.meta['domain'],
-                'email': ','.join(email_addresses) if email_addresses else 'NA',
+                'email': ','.join(self.email_addresses) if self.email_addresses else 'NA',
                 'snov_io': 'Yes'
             }
         )
