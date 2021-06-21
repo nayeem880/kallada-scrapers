@@ -54,9 +54,8 @@ class GetEmailsSpider(scrapy.Spider):
         self.REPORT_TITLE = report_title
 
         # PRODUCTION ENV DB
-        self.client = pymongo.MongoClient("mongodb+srv://nayeem:imunbd990@cluster0.vh1iq.mongodb.net/scraper_db?retryWrites=true&w=majority")
-        self.db = self.client[user]
-
+        self.client = pymongo.MongoClient("mongodb+srv://nayeem:imunbd990@cluster0.vh1iq.mongodb.net/bloggerhit?retryWrites=true&w=majority")
+        self.db = self.client[str(user)]
 
         # use_db will be true when user uploads a CSV file while running this spider
         # or choose to run both the spiders together

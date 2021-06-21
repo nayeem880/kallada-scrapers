@@ -22,9 +22,14 @@ class ExtractEmailsPipeline(object):
        
 
     def process_item(self, item, spider):
-        # PRODUCTION DB INFO
-        # print("Connecting database to -------------------------------", self.collection_name)
         self.db = self.client[item["user"]]
+        print()
+        print()
+        print()
+        print("THIS IS THE DB ", self.db)
+        print()
+        print()
+        print()
 
         if spider.name == 'get_emails':
             if item['email'] != 'NA':
@@ -47,7 +52,6 @@ class ExtractEmailsPipeline(object):
         # if the spider is guestpostscraper then insert to gostpostscraper mongodb
         else:
             #print(f'guestpostscraper bb Insert -> {item}')
-            # self.db[self.collection_name].update_one(
             self.db[item["report_title"]].update_one(
                 {"website_url": item["website_url"]}, {"$set": item}, upsert=True
             )
@@ -60,6 +64,7 @@ class ExtractEmailsPipeline(object):
         if spider.name == 'get_emails':
             if os.path.isfile('get_emails.csv'):
                 shutil.copyfile('get_emails.csv', 'get_emails.out.csv')
+                print("YOOOOOOOOOOOOOOO get email OOOOOOOOOOOOOOOOOOOOOOOOOOO+==============================")
         
         if spider.name == 'guestpostscraper':
             if os.path.isfile('guestpostscraper.csv'):
