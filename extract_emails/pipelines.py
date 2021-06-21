@@ -34,18 +34,18 @@ class ExtractEmailsPipeline(object):
         if spider.name == 'get_emails':
             if item['email'] != 'NA':
                 if item['da'] == 'NA':
-                    print(f'ERROR: Skipping db insertion because DA for {item["website"]} was not found')
+                    print(f' >>>>>>>>> DA for {item["website"]} was not found')
                 elif item['pa'] == 'NA':
-                    print(f'ERROR: Skipping db insertion because PA for {item["website"]} was not found')
+                    print(f' >>>>>>>>> PA for {item["website"]} was not found')
                 elif item['cf'] == 'NA':
-                    print(f'ERROR: Skipping db insertion because CF for {item["website"]} was not found')
+                    print(f' >>>>>>>>> CF for {item["website"]} was not found')
                 elif item['tf'] == 'NA':
-                    print(f'ERROR: Skipping db insertion because TF for {item["website"]} was not found')
+                    print(f' >>>>>>>>> TF for {item["website"]} was not found')
                 else:
                     print()
                     print(f'get_emails db Insert --------------->>>--------->--------------->>>>>>--------->--------------->>>>>>---------> {item}')
                     print()
-                    
+
                     self.db[item["report_title"]].update_one(
                         {"url": item["url"]}, {"$set": item}, upsert=True
                     )
