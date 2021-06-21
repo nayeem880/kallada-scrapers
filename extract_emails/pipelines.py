@@ -26,7 +26,7 @@ class ExtractEmailsPipeline(object):
         print()
         print()
         print()
-        # print("THIS IS THE DB ", self.db)
+        print("THIS IS THE item ", item)
         print()
         print()
         print()
@@ -42,19 +42,21 @@ class ExtractEmailsPipeline(object):
                 elif item['tf'] == 'NA':
                     print(f'ERROR: Skipping db insertion because TF for {item["website"]} was not found')
                 else:
-                    print("PASSED -------------")
-
-                print(f'get_emails db Insert --------------->>>--------->--------------->>>>>>--------->--------------->>>>>>---------> {item}')
-                self.db[item["report_title"]].update_one(
-                    {"url": item["url"]}, {"$set": item}, upsert=True
-                )
-                
+                    print()
+                    print(f'get_emails db Insert --------------->>>--------->--------------->>>>>>--------->--------------->>>>>>---------> {item}')
+                    print()
+                    
+                    self.db[item["report_title"]].update_one(
+                        {"url": item["url"]}, {"$set": item}, upsert=True
+                    )
             else:
                 print(f'ERROR: Skipping db insertion because no email was not found for {item["website"]}')
 
         # if the spider is guestpostscraper then insert to gostpostscraper mongodb
         else:
-            #print(f'guestpostscraper bb Insert -> {item}')
+            print()
+            print(f'guestpostscraper bb Insert -> {item}')
+            print()
             self.db[item["report_title"]].update_one(
                 {"website_url": item["website_url"]}, {"$set": item}, upsert=True
             )

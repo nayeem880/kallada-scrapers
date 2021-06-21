@@ -89,7 +89,7 @@ class GetEmailsSpider(scrapy.Spider):
                     {
                         'url': website_url.strip(),
                         'category': category.strip(),
-                        'report_title': self.REPORT_TITLE.strip(),
+                        'report_title': report_title.strip(),
                         'user': user.strip()
                     }
                 )
