@@ -37,7 +37,7 @@ class ExtractEmailsPipeline(object):
                 elif item['tf'] == 'NA':
                     print(f'ERROR: Skipping db insertion because TF for {item["website"]} was not found')
                 else:
-                    # print(f'get_emails db Insert --------------->>>>>>---------> {item}')
+                    print(f'get_emails db Insert --------------->>>>>>--------->--------------->>>>>>--------->--------------->>>>>>---------> {item}')
                     self.db[item["report_title"]].update_one(
                         {"url": item["url"]}, {"$set": item}, upsert=True
                     )
