@@ -7,15 +7,15 @@ class ExtractEmailsPipeline(object):
     collection_name = ""
     
     def open_spider(self, spider):
-        if spider.name == 'get_emails':
-            if os.path.isfile('get_emails.csv'):
-                os.remove('get_emails.csv')
-                print("==================== removing csv file and creating one ======================")
-            # self.collection_name = 'get_email'
+        # if spider.name == 'get_emails':
+        #     if os.path.isfile('get_emails.csv'):
+        #         os.remove('get_emails.csv')
+        #         print("==================== removing csv file and creating one ======================")
+        #     # self.collection_name = 'get_email'
 
-        if spider.name == 'guestpostscraper':
-            if os.path.isfile('guestpostscraper.csv'):
-                os.remove('guestpostscraper.csv')
+        # if spider.name == 'guestpostscraper':
+        #     if os.path.isfile('guestpostscraper.csv'):
+        #         os.remove('guestpostscraper.csv')
             # self.collection_name = 'scraper_db'
         self.client = pymongo.MongoClient("mongodb+srv://nayeem:imunbd990@cluster0.vh1iq.mongodb.net/bloggerhit?retryWrites=true&w=majority")
 
@@ -65,13 +65,13 @@ class ExtractEmailsPipeline(object):
 
 
     def close_spider(self, spider):
-        if spider.name == 'get_emails':
-            if os.path.isfile('get_emails.csv'):
-                shutil.copyfile('get_emails.csv', 'get_emails.out.csv')
-                print("YOOOOOOOOOOOOOOO get email OOOOOOOOOOOOOOOOOOOOOOOOOOO+==============================")
+        # if spider.name == 'get_emails':
+        #     if os.path.isfile('get_emails.csv'):
+        #         shutil.copyfile('get_emails.csv', 'get_emails.out.csv')
+        #         print("YOOOOOOOOOOOOOOO get email OOOOOOOOOOOOOOOOOOOOOOOOOOO+==============================")
         
-        if spider.name == 'guestpostscraper':
-            if os.path.isfile('guestpostscraper.csv'):
-                print("YOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO+==============================")
-                shutil.copyfile('guestpostscraper.csv', 'guestpostscraper.out.csv')
+        # if spider.name == 'guestpostscraper':
+        #     if os.path.isfile('guestpostscraper.csv'):
+        #         print("YOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO+==============================")
+        #         shutil.copyfile('guestpostscraper.csv', 'guestpostscraper.out.csv')
         self.client.close()
