@@ -54,8 +54,8 @@ class GetEmailsSpider(scrapy.Spider):
         self.REPORT_TITLE = report_title
 
         # PRODUCTION ENV DB
-        # self.client = pymongo.MongoClient("mongodb+srv://nayeem:imunbd990@cluster0.vh1iq.mongodb.net/bloggerhit?retryWrites=true&w=majority")
-        self.client = pymongo.MongoClient("mongodb+srv://admin-santhej:2&fX#zF9JzG$@cluster0.3dv1a.mongodb.net/bloggerhit?retryWrites=true&w=majority")
+        self.client = pymongo.MongoClient("mongodb+srv://nayeem:imunbd990@cluster0.vh1iq.mongodb.net/bloggerhit?retryWrites=true&w=majority")
+        # self.client = pymongo.MongoClient("mongodb+srv://admin-santhej:2&fX#zF9JzG$@cluster0.3dv1a.mongodb.net/bloggerhit?retryWrites=true&w=majority")
         self.db = self.client[str(user)]
         self.db[str(prt)]
 
@@ -101,15 +101,16 @@ class GetEmailsSpider(scrapy.Spider):
             # csv_data = pd.read_csv('guestpostscraper.out.csv')
             csv_data = new_data
             # print("Getting guestpostscraper -----------------------------------")
-            for website_url, category, user in csv_data[['website_url', 'category', 'user']].values:
+            for each in csv_data:
                 self.urls.append(
                     {
-                        'url': website_url.strip(),
-                        'category': category.strip(),
-                        'report_title': report_title.strip(),
-                        'user': user.strip()
+                        'url': each['website_url'].strip(),
+                        'category': each['category'].strip(),
+                        'report_title': each['report_title'].strip(),
+                        'user': each['user'].strip()
                     }
                 )
+
 
         # print()
         # print()

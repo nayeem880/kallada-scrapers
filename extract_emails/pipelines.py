@@ -17,8 +17,8 @@ class ExtractEmailsPipeline(object):
         #     if os.path.isfile('guestpostscraper.csv'):
         #         os.remove('guestpostscraper.csv')
             # self.collection_name = 'scraper_db'
-        # self.client = pymongo.MongoClient("mongodb+srv://nayeem:imunbd990@cluster0.vh1iq.mongodb.net/bloggerhit?retryWrites=true&w=majority")
-        self.client = pymongo.MongoClient("mongodb+srv://admin-santhej:2&fX#zF9JzG$@cluster0.3dv1a.mongodb.net/scraper_db?retryWrites=true&w=majority")
+        self.client = pymongo.MongoClient("mongodb+srv://nayeem:imunbd990@cluster0.vh1iq.mongodb.net/bloggerhit?retryWrites=true&w=majority")
+        # self.client = pymongo.MongoClient("mongodb+srv://admin-santhej:2&fX#zF9JzG$@cluster0.3dv1a.mongodb.net/scraper_db?retryWrites=true&w=majority")
                                          # mongodb+srv://admin-santhej:2&fX#zF9JzG$@cluster0.3dv1a.mongodb.net/myFirstDatabase?retryWrites=true&w=majority
 
 
@@ -29,7 +29,7 @@ class ExtractEmailsPipeline(object):
         print()
         print()
         print()
-        print("THIS IS THE item ", item, self.db)
+        print("THIS IS THE item ", item)
         print()
         print()
         print()
