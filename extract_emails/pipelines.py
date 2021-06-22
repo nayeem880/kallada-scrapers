@@ -26,7 +26,8 @@ class ExtractEmailsPipeline(object):
 
     def process_item(self, item, spider):
         self.client = pymongo.MongoClient("mongodb+srv://nayeem:imunbd990@cluster0.vh1iq.mongodb.net/bloggerhit?retryWrites=true&w=majority")
-        self.db = self.client[str(item["user"])]
+        # self.db = self.client[str(item["user"])]
+        self.db = self.client['GLOBAL']
         
         print()
         # print("THIS IS THE ITEMM ", item)
