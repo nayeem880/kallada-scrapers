@@ -57,7 +57,7 @@ class ExtractEmailsPipeline(object):
 
                 # got email? insert directly
                 print(f'get_emails db Insert --------------->>>--------->--------------->>>>>>--------->--------------->>>>>>---------> {item}')
-                self.db[item["report_title"]].update_one({"url": item["url"]}, {"$set": item}, upsert=True)
+                self.db[str(item["report_title"])].update_one({"url": item["url"]}, {"$set": item}, upsert=True)
                 print()
 
             else:
