@@ -108,7 +108,7 @@ class GetEmailsSpider(scrapy.Spider):
             # print("Getting guestpostscraper -----------------------------------")
             for each in csv_data:
                 print()
-                print("EACH ", each, type(each))
+                # print("EACH ", each, type(each))
                 print()
                 website_url = each['website_url'].strip()
                 category = each['category'].strip()
@@ -116,7 +116,7 @@ class GetEmailsSpider(scrapy.Spider):
                 report = self.REPORT_TITLE.strip()
                 user = each['user'].strip()
 
-                print("HERE IS THE DATA ", website_url, category, report, user)
+                # print("HERE IS THE DATA ", website_url, category, report, user)
                 print()
 
                 self.urls.append(
@@ -131,7 +131,7 @@ class GetEmailsSpider(scrapy.Spider):
 
         # print()
         # print()
-        print("Self urls ----------------------self urls -------------------------", len(self.urls), self.urls)
+        print("Self urls ----------------------self urls -------------------------", len(self.urls))
         # print()
         # print()
 
@@ -285,6 +285,11 @@ class GetEmailsSpider(scrapy.Spider):
 
             # print("-----------------------------------------got emails in first site----------------------------- ", self.email_addresses, response.url, unique_emails)
             self.email_addresses = []
+
+         
+            # print()
+            print(f'http://domdetailer.com/api/checkDomain.php?domain={domain}&app=DomDetailer&apikey={self.dom_detailer_api_key}&majesticChoice=root',)
+            
             yield Request(
                 f'http://domdetailer.com/api/checkDomain.php?domain={domain}&app=DomDetailer&apikey={self.dom_detailer_api_key}&majesticChoice=root',
                 headers=self.headers,
@@ -598,9 +603,12 @@ class GetEmailsSpider(scrapy.Spider):
 
 
     def parse_dom_details(self, response):
+        print('DOM DETAILER 1', response, response.status, response.url, response.json, response.text, json.loads(response.text))
+
         if response.headers.get('Content-Type'):
             try: 
                 json_data = json.loads(response.text)
+                print('DOM DETAILER ', json_data)
             except:
                 json_data = {}
         else:

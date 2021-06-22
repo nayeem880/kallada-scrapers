@@ -26,36 +26,30 @@ class ExtractEmailsPipeline(object):
 
     def process_item(self, item, spider):
         self.db = self.client[str(item["user"])]
+        
         print()
-        print()
-        print()
-        print("THIS IS THE ITEMM ", item)
-        print()
-        print()
-        print()
+        # print("THIS IS THE ITEMM ", item)
+       
 
         if spider.name == 'get_emails':
             if item['email'] != 'NA':
                 if item['da'] == 'NA':
                     print()
                     print(f' >>>>>>>>> DA for {item["website"]} was not found')
-                    print()
                 elif item['pa'] == 'NA':
                     print()
                     print(f' >>>>>>>>> PA for {item["website"]} was not found')
-                    print()
                 elif item['cf'] == 'NA':
                     print()
                     print(f' >>>>>>>>> CF for {item["website"]} was not found')
-                    print()
                 elif item['tf'] == 'NA':
                     print()
                     print(f' >>>>>>>>> TF for {item["website"]} was not found')
-                    print()
                 else:
-                    print(f'get_emails db Insert --------------->>>--------->--------------->>>>>>--------->--------------->>>>>>---------> {item}')
-                    self.db[str(item["report_title"])].update_one({"url": item["url"]}, {"$set": item}, upsert=True)
-                    print()
+                    print("Err")
+
+                print(f'get_emails db Insert --------------->>>--------->--------------->>>>>>--------->--------------->>>>>>---------> {item}')
+                self.db[str(item["report_title"])].update_one({"url": item["url"]}, {"$set": item}, upsert=True)
 
             else:
                 print()
