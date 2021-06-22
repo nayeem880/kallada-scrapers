@@ -29,7 +29,7 @@ class ExtractEmailsPipeline(object):
         print()
         print()
         print()
-        print("THIS IS THE item ", item)
+        # print("THIS IS THE item ", item)
         print()
         print()
         print()
@@ -37,33 +37,37 @@ class ExtractEmailsPipeline(object):
         if spider.name == 'get_emails':
             if item['email'] != 'NA':
                 if item['da'] == 'NA':
+                    print()
                     print(f' >>>>>>>>> DA for {item["website"]} was not found')
+                    print()
                 elif item['pa'] == 'NA':
+                    print()
                     print(f' >>>>>>>>> PA for {item["website"]} was not found')
+                    print()
                 elif item['cf'] == 'NA':
+                    print()
                     print(f' >>>>>>>>> CF for {item["website"]} was not found')
+                    print()
                 elif item['tf'] == 'NA':
+                    print()
                     print(f' >>>>>>>>> TF for {item["website"]} was not found')
+                    print()
                 else:
-                    print()
-                    print(f'get_emails db Insert --------------->>>--------->--------------->>>>>>--------->--------------->>>>>>---------> {item}')
-                    self.db[item["report_title"]].update_one(
-                        {"url": item["url"]}, {"$set": item}, upsert=True
-                    )
-                    print()
-            else:
-                print(f'ERROR: Skipping db insertion because no email was not found for {item["website"]}')
+                    print('err')
 
-        # if the spider is guestpostscraper then insert to gostpostscraper mongodb
-        # if the spider is guestpostscraper then insert to gostpostscraper mongodb
-        # if the spider is guestpostscraper then insert to gostpostscraper mongodb
+                # got email? insert directly
+                print(f'get_emails db Insert --------------->>>--------->--------------->>>>>>--------->--------------->>>>>>---------> {item}')
+                self.db[item["report_title"]].update_one({"url": item["url"]}, {"$set": item}, upsert=True)
+                print()
+
+            else:
+                print()
+                print(f'ERROR: Skipping db insertion because no email was not found for {item["website"]}')
+        
         else:
-            print()
             print(f'guestpostscraper bb Insert -> {item}')
             print()
-            self.db[str(item["report_title"])].update_one(
-                {"website_url": item["website_url"]}, {"$set": item}, upsert=True
-            )
+            self.db[str(item["report_title"])].update_one({"website_url": item["website_url"]}, {"$set": item}, upsert=True)
         return item
 
 

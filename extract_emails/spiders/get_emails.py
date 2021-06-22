@@ -158,7 +158,7 @@ class GetEmailsSpider(scrapy.Spider):
     def start_requests(self):
         # Access each URL in the self.urls list
         for url in self.urls:
-            print("CHECkING - ", url['url'])
+            # print("CHECkING - ", url['url'])
 
             if self.is_db_data_outdated(url['url']):
                 domain = url['url'].split('/')[2].replace('www.', '')
@@ -266,7 +266,7 @@ class GetEmailsSpider(scrapy.Spider):
 
 
 
-            print("-----------------------------------------got emails in first site----------------------------- ", self.email_addresses, response.url, unique_emails)
+            # print("-----------------------------------------got emails in first site----------------------------- ", self.email_addresses, response.url, unique_emails)
             self.email_addresses = []
             yield Request(
                 f'http://domdetailer.com/api/checkDomain.php?domain={domain}&app=DomDetailer&apikey={self.dom_detailer_api_key}&majesticChoice=root',
@@ -439,7 +439,7 @@ class GetEmailsSpider(scrapy.Spider):
                     else:
                         self.logger.debug(f'ERROR: Decoded Email not found - {response.url}')
 
-            print("-----------------------------------------got encoded emails----------------------------- ", self.email_addresses, response.url)
+            # print("-----------------------------------------got encoded emails----------------------------- ", self.email_addresses, response.url)
             unique_emails = list(dict.fromkeys([x.lower() for x in self.email_addresses]))
             yield Request(
                 f'http://domdetailer.com/api/checkDomain.php?domain={response.meta["domain"]}&app=DomDetailer&apikey={self.dom_detailer_api_key}&majesticChoice=root',
@@ -503,7 +503,7 @@ class GetEmailsSpider(scrapy.Spider):
                 self._filter_emails(email.group(1))
         # print("HERE WEBSITE :", self.email_addresses)
         if self.email_addresses:
-            print("__________________________________________________Got email inside actual website___________________________________", self.email_addresses, response.url )
+            # print("__________________________________________________Got email inside actual website___________________________________", self.email_addresses, response.url )
             unique_emails = list(dict.fromkeys([x.lower() for x in self.email_addresses]))
             yield Request(
                 f'http://domdetailer.com/api/checkDomain.php?domain={response.meta["domain"]}&app=DomDetailer&apikey={self.dom_detailer_api_key}&majesticChoice=root',
@@ -559,7 +559,7 @@ class GetEmailsSpider(scrapy.Spider):
                                 targetlinks.append(l)
 
 
-            print("Target links ------------------>>>> ",targetlinks)
+            # print("Target links ------------------>>>> ",targetlinks)
 
             for tar in targetlinks:
                 yield Request(
@@ -650,7 +650,7 @@ class GetEmailsSpider(scrapy.Spider):
 
 
         if self.email_addresses:
-            print("__________________________________________________Got email in contact page ___________________________________", self.email_addresses, response.url)
+            # print("__________________________________________________Got email in contact page ___________________________________", self.email_addresses, response.url)
             unique_emails = list(dict.fromkeys([x.lower() for x in self.email_addresses]))
             # print("UNIQUE EMAILS IN GOOGLE SEARCH ", unique_emails)
             yield Request(
@@ -729,7 +729,7 @@ class GetEmailsSpider(scrapy.Spider):
         # print("HERE GOOGLE", self.email_addresses)
 
         if self.email_addresses:
-            print("__________________________________________________Got email in GOOGLE SEARCH ___________________________________", self.email_addresses, response.url)
+            # print("__________________________________________________Got email in GOOGLE SEARCH ___________________________________", self.email_addresses, response.url)
             unique_emails = list(dict.fromkeys([x.lower() for x in self.email_addresses]))
             # print("UNIQUE EMAILS IN GOOGLE SEARCH ", unique_emails)
             yield Request(
