@@ -30,6 +30,23 @@ RETRY_HTTP_CODES = [500, 502, 503, 504, 522, 524, 408, 429]
 DOWNLOAD_FAIL_ON_DATALOSS = False
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'extract_emails (+http://www.yourdomain.com)'
 
