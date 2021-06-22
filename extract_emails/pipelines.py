@@ -4,10 +4,11 @@ import pymongo
 import shutil
 
 class ExtractEmailsPipeline(object):
-    collection_name = ""
-    
-    def open_spider(self, spider):
-        print("")
+
+
+    # collection_name = ""
+    # def open_spider(self, spider):
+    #     print("")
         # if spider.name == 'get_emails':
         #     if os.path.isfile('get_emails.csv'):
         #         os.remove('get_emails.csv')
@@ -65,8 +66,15 @@ class ExtractEmailsPipeline(object):
 
 
 
-    def close_spider(self, spider):
-        print("")
+    # def close_spider(self, spider):
+    #     print("")
+
+
+
+
+
+
+
         # if spider.name == 'get_emails':
         #     if os.path.isfile('get_emails.csv'):
         #         shutil.copyfile('get_emails.csv', 'get_emails.out.csv')
