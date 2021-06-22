@@ -11,7 +11,7 @@ ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 # this one is added new
-CONCURRENT_REQUESTS = 32
+CONCURRENT_REQUESTS = 128
 
 # Configure a delay for requests for the same website (default: 0)
 # See https://doc.scrapy.org/en/latest/topics/settings.html#download-delay
@@ -90,29 +90,31 @@ HTTPERROR_ALLOW_ALL = True
 
 CRAWLERA_ENABLED = True
 CRAWLERA_APIKEY = '6fb5e1784f5846af94c3f7c9cfaef420'
-CONCURRENT_REQUESTS_PER_DOMAIN = 8
-# DOWNLOAD_DELAY = 2
+CONCURRENT_REQUESTS_PER_DOMAIN = 32
+DOWNLOAD_DELAY = .5
 # AUTOTHROTTLE_ENABLED = True
 # CRAWLERA_PRESERVE_DELAY = True
 
-
+RETRY_ENABLED = True
+RETRY_TIMES = 2
+RETRY_HTTP_CODES = [500, 502, 503, 504, 522, 524, 408, 429]
 
 # DUPEFILTER_DEBUG = True
-
 SCHEDULER_PRIORITY_QUEUE = 'scrapy.pqueues.DownloaderAwarePriorityQueue'
 REACTOR_THREADPOOL_MAXSIZE = 300
 LOG_LEVEL = 'INFO'
-# COOKIES_ENABLED = False
-# RETRY_ENABLED = True
-# RETRY_TIMES = 2
-# REDIRECT_MAX_TIMES = 10
-# DOWNLOAD_TIMEOUT = 10
+DOWNLOAD_TIMEOUT = 10
 DOWNLOAD_MAXSIZE = 10000000
+DOWNLOAD_FAIL_ON_DATALOSS = False
+COOKIES_ENABLED = False
+REDIRECT_ENABLED = False
+
+
+# REDIRECT_MAX_TIMES = 10
 # AJAXCRAWL_ENABLED = True
 # DEPTH_PRIORITY = 1
 # SCHEDULER_DISK_QUEUE = 'scrapy.squeues.PickleFifoDiskQueue'
 # SCHEDULER_MEMORY_QUEUE = 'scrapy.squeues.FifoMemoryQueue'
-DOWNLOAD_FAIL_ON_DATALOSS = False
 
 # Limit ITEMS to Debug
 # CLOSESPIDER_ITEMCOUNT = 60

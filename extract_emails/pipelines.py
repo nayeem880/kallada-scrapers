@@ -44,11 +44,10 @@ class ExtractEmailsPipeline(object):
                 else:
                     print()
                     print(f'get_emails db Insert --------------->>>--------->--------------->>>>>>--------->--------------->>>>>>---------> {item}')
-                    print()
-
                     self.db[item["report_title"]].update_one(
                         {"url": item["url"]}, {"$set": item}, upsert=True
                     )
+                    print()
             else:
                 print(f'ERROR: Skipping db insertion because no email was not found for {item["website"]}')
 
