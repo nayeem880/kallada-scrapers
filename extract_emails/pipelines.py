@@ -47,9 +47,8 @@ class ExtractEmailsPipeline(object):
                     print(f' >>>>>>>>> TF for {item["website"]} was not found')
                 else:
                     print("Err")
-
-                print(f'get_emails db Insert --------------->>>--------->--------------->>>>>>--------->--------------->>>>>>---------> {item}')
-                self.db[str(item["report_title"])].update_one({"url": item["url"]}, {"$set": item}, upsert=True)
+                    print(f'get_emails db Insert --------------->>>--------->--------------->>>>>>--------->--------------->>>>>>---------> {item}')
+                    self.db[str(item["report_title"])].update_one({"url": item["url"]}, {"$set": item}, upsert=True)
 
             else:
                 print()
