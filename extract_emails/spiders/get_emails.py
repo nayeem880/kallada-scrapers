@@ -46,7 +46,7 @@ class GetEmailsSpider(scrapy.Spider):
     }
 
     def __init__(self, use_db='', prt="", report_title='', use_csv='', user="", *args, **kwargs):
-        # self.logger.debug(f'use_db---------------------------------------------------------{use_db}')
+        self.logger.debug(f'user prt---------------------------------------------------------{user, prt}')
         self.logger.debug(f'report_title---------------------------------------------------------{report_title}')
         self.logger.debug(f'use_csv---------------------------------------------------------{use_csv}')
         self.urls = []
@@ -70,7 +70,9 @@ class GetEmailsSpider(scrapy.Spider):
         for j in xx:
             j.pop('_id')
             new_data.append(j)
-        print(new_data[:10], len(new_data))
+        print()
+        print(new_data[:5], len(new_data))
+        print()
 
 
         # use_db will be true when user uploads a CSV file while running this spider
@@ -100,14 +102,29 @@ class GetEmailsSpider(scrapy.Spider):
             # Read the CSV file & fillup the self.urls list
             # csv_data = pd.read_csv('guestpostscraper.out.csv')
             csv_data = new_data
+            print()
+            print("TYPE OF CSV ", type(csv_data))
+            print()
             # print("Getting guestpostscraper -----------------------------------")
             for each in csv_data:
+                print()
+                print("EACH ", each, type(each))
+                print()
+                website_url = each['website_url'].strip()
+                category = each['category'].strip()
+                # report_title = each['report_title'].strip()
+                report = self.REPORT_TITLE.strip()
+                user = each['user'].strip()
+
+                print("HERE IS THE DATA ", website_url, category, report, user)
+                print()
+
                 self.urls.append(
                     {
-                        'url': each['website_url'].strip(),
-                        'category': each['category'].strip(),
-                        'report_title': each['report_title'].strip(),
-                        'user': each['user'].strip()
+                        'url': website_url,
+                        'category': category ,
+                        'report_title': report,
+                        'user': user,
                     }
                 )
 
