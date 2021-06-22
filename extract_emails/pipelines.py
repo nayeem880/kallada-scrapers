@@ -26,10 +26,6 @@ class ExtractEmailsPipeline(object):
        
 
     def process_item(self, item, spider):
-        self.client = pymongo.MongoClient("mongodb+srv://nayeem:imunbd990@cluster0.vh1iq.mongodb.net/bloggerhit?retryWrites=true&w=majority")
-        # self.db = self.client[str(item["user"])]
-        self.db = self.client['GLOBAL']
-        
         print()
         # print("THIS IS THE ITEMM ", item)
         if spider.name == 'get_emails':
@@ -47,9 +43,15 @@ class ExtractEmailsPipeline(object):
                     print()
                     print(f' >>>>>>>>> TF for {item["website"]} was not found')
                 else:
-                    print("Err")
+                    self.client = pymongo.MongoClient("mongodb+srv://nayeem:imunbd990@cluster0.vh1iq.mongodb.net/bloggerhit?retryWrites=true&w=majority")
+                    # self.db = self.client[str(item["user"])]
+                    self.db = self.client['GLOBAL']
+                    print()
+                    print("HERE IS THE DB ", self.db)
+                    print()
                     print(f'get_emails db Insert --------------->>>--------->--------------->>>>>>--------->--------------->>>>>>---------> {item}')
                     self.db[str(item["report_title"])].update_one({"url": item["url"]}, {"$set": item}, upsert=True)
+                    self.client.close()
 
             else:
                 print()
@@ -57,10 +59,14 @@ class ExtractEmailsPipeline(object):
         
         else:
             print(f'guestpostscraper bb Insert -> {item}')
+            self.client = pymongo.MongoClient("mongodb+srv://nayeem:imunbd990@cluster0.vh1iq.mongodb.net/bloggerhit?retryWrites=true&w=majority")
+            # self.db = self.client[str(item["user"])]
+            self.db = self.client['GLOBAL']
+            print()
+            print("HERE IS THE DB ", self.db)
             print()
             self.db[str(item["report_title"])].update_one({"website_url": item["website_url"]}, {"$set": item}, upsert=True)
-        
-        self.client.close()
+            self.client.close()
         return item
 
 
@@ -68,13 +74,6 @@ class ExtractEmailsPipeline(object):
 
     # def close_spider(self, spider):
     #     print("")
-
-
-
-
-
-
-
         # if spider.name == 'get_emails':
         #     if os.path.isfile('get_emails.csv'):
         #         shutil.copyfile('get_emails.csv', 'get_emails.out.csv')
