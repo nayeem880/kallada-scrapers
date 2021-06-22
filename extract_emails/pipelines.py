@@ -7,6 +7,7 @@ class ExtractEmailsPipeline(object):
     collection_name = ""
     
     def open_spider(self, spider):
+        print("")
         # if spider.name == 'get_emails':
         #     if os.path.isfile('get_emails.csv'):
         #         os.remove('get_emails.csv')
@@ -17,7 +18,6 @@ class ExtractEmailsPipeline(object):
         #     if os.path.isfile('guestpostscraper.csv'):
         #         os.remove('guestpostscraper.csv')
             # self.collection_name = 'scraper_db'
-        self.client = pymongo.MongoClient("mongodb+srv://nayeem:imunbd990@cluster0.vh1iq.mongodb.net/bloggerhit?retryWrites=true&w=majority")
         # self.client = pymongo.MongoClient("mongodb+srv://admin-santhej:2&fX#zF9JzG$@cluster0.3dv1a.mongodb.net/scraper_db?retryWrites=true&w=majority")
                                          # mongodb+srv://admin-santhej:2&fX#zF9JzG$@cluster0.3dv1a.mongodb.net/myFirstDatabase?retryWrites=true&w=majority
 
@@ -25,12 +25,11 @@ class ExtractEmailsPipeline(object):
        
 
     def process_item(self, item, spider):
+        self.client = pymongo.MongoClient("mongodb+srv://nayeem:imunbd990@cluster0.vh1iq.mongodb.net/bloggerhit?retryWrites=true&w=majority")
         self.db = self.client[str(item["user"])]
         
         print()
         # print("THIS IS THE ITEMM ", item)
-       
-
         if spider.name == 'get_emails':
             if item['email'] != 'NA':
                 if item['da'] == 'NA':
@@ -58,12 +57,15 @@ class ExtractEmailsPipeline(object):
             print(f'guestpostscraper bb Insert -> {item}')
             print()
             self.db[str(item["report_title"])].update_one({"website_url": item["website_url"]}, {"$set": item}, upsert=True)
+        
+        self.client.close()
         return item
 
 
 
 
     def close_spider(self, spider):
+        print("")
         # if spider.name == 'get_emails':
         #     if os.path.isfile('get_emails.csv'):
         #         shutil.copyfile('get_emails.csv', 'get_emails.out.csv')
@@ -73,4 +75,4 @@ class ExtractEmailsPipeline(object):
         #     if os.path.isfile('guestpostscraper.csv'):
         #         print("YOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO+==============================")
         #         shutil.copyfile('guestpostscraper.csv', 'guestpostscraper.out.csv')
-        self.client.close()
+        

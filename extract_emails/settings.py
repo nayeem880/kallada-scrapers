@@ -1,17 +1,42 @@
 BOT_NAME = 'extract_emails'
-
 SPIDER_MODULES = ['extract_emails.spiders']
 NEWSPIDER_MODULE = 'extract_emails.spiders'
+
+ROBOTSTXT_OBEY = False
+CONCURRENT_REQUESTS = 512
+
+
+DOWNLOADER_MIDDLEWARES = {'scrapy_crawlera.CrawleraMiddleware': 610}
+ITEM_PIPELINES = {
+   'extract_emails.pipelines.ExtractEmailsPipeline': 300,
+}
+
+HTTPCACHE_ENABLED = False
+HTTPERROR_ALLOW_ALL = True
+
+CRAWLERA_ENABLED = True
+CRAWLERA_APIKEY = '6fb5e1784f5846af94c3f7c9cfaef420'
+CONCURRENT_REQUESTS_PER_DOMAIN = 32
+
+
+RETRY_ENABLED = False
+SCHEDULER_PRIORITY_QUEUE = 'scrapy.pqueues.DownloaderAwarePriorityQueue'
+REACTOR_THREADPOOL_MAXSIZE = 300
+LOG_LEVEL = 'INFO'
+
+DOWNLOAD_MAXSIZE = 10000000
+REDIRECT_ENABLED = False
+RETRY_HTTP_CODES = [500, 502, 503, 504, 522, 524, 408, 429]
+DOWNLOAD_FAIL_ON_DATALOSS = False
+
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'extract_emails (+http://www.yourdomain.com)'
 
 # Obey robots.txt rules
-ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 # this one is added new
-CONCURRENT_REQUESTS = 256
 
 # Configure a delay for requests for the same website (default: 0)
 # See https://doc.scrapy.org/en/latest/topics/settings.html#download-delay
@@ -43,7 +68,6 @@ CONCURRENT_REQUESTS = 256
 #     'scrapy.downloadermiddlewares.retry.RetryMiddleware': None,
 #     'scrapy_crawlera.CrawleraMiddleware': 610
 # }
-DOWNLOADER_MIDDLEWARES = {'scrapy_crawlera.CrawleraMiddleware': 610}
 
 # Enable or disable extensions
 # See https://doc.scrapy.org/en/latest/topics/extensions.html
@@ -53,9 +77,6 @@ DOWNLOADER_MIDDLEWARES = {'scrapy_crawlera.CrawleraMiddleware': 610}
 
 # Configure item pipelines
 # See https://doc.scrapy.org/en/latest/topics/item-pipeline.html
-ITEM_PIPELINES = {
-   'extract_emails.pipelines.ExtractEmailsPipeline': 300,
-}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://doc.scrapy.org/en/latest/topics/autothrottle.html
@@ -75,7 +96,6 @@ ITEM_PIPELINES = {
 
 # Enable and configure HTTP caching (disabled by default)
 # See https://doc.scrapy.org/en/latest/topics/downloader-middleware.html#httpcache-middleware-settings
-HTTPCACHE_ENABLED = False
 
 
 
@@ -84,30 +104,20 @@ HTTPCACHE_ENABLED = False
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
-HTTPERROR_ALLOW_ALL = True
 # LOG_ENABLED = False
 
-
-CRAWLERA_ENABLED = True
-CRAWLERA_APIKEY = '6fb5e1784f5846af94c3f7c9cfaef420'
-CONCURRENT_REQUESTS_PER_DOMAIN = 32
 # DOWNLOAD_DELAY = .5
 # AUTOTHROTTLE_ENABLED = True
 # CRAWLERA_PRESERVE_DELAY = True
 
-RETRY_ENABLED = False
+
+
+
 # RETRY_TIMES = 2
-RETRY_HTTP_CODES = [500, 502, 503, 504, 522, 524, 408, 429]
 
 # DUPEFILTER_DEBUG = True
-SCHEDULER_PRIORITY_QUEUE = 'scrapy.pqueues.DownloaderAwarePriorityQueue'
-REACTOR_THREADPOOL_MAXSIZE = 300
-LOG_LEVEL = 'INFO'
 # DOWNLOAD_TIMEOUT = 10
-DOWNLOAD_MAXSIZE = 10000000
-DOWNLOAD_FAIL_ON_DATALOSS = False
 # COOKIES_ENABLED = False
-REDIRECT_ENABLED = False
 
 
 # REDIRECT_MAX_TIMES = 10

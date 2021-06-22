@@ -48,17 +48,17 @@ class GuestpostscraperSpider(scrapy.Spider):
     }
                     
     write_for_us_url = ''
-    custom_settings = {
-        'FEEDS': {
-            'guestpostscraper.csv' : {
-                'format': 'csv',
-                'encoding': 'utf-8'
-            }
-        },
-        'FEED_EXPORTERS': {
-            'csv': 'scrapy.exporters.CsvItemExporter',
-        },
-    }
+    # custom_settings = {
+    #     'FEEDS': {
+    #         'guestpostscraper.csv' : {
+    #             'format': 'csv',
+    #             'encoding': 'utf-8'
+    #         }
+    #     },
+    #     'FEED_EXPORTERS': {
+    #         'csv': 'scrapy.exporters.CsvItemExporter',
+    #     },
+    # }
 
     def __init__(self, seed_keywords="", report_title='', user="", *args, **kwargs):
         seed_keywords = seed_keywords.replace("[","")

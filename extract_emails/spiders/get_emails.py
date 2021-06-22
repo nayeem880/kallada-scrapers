@@ -33,17 +33,17 @@ class GetEmailsSpider(scrapy.Spider):
     }
     
     dom_detailer_api_key = '5SUT34180BBFG'
-    custom_settings = {
-        'FEEDS': {
-            'get_emails.csv' : {
-                'format': 'csv',
-                'encoding': 'utf-8'
-            }
-        },
-        'FEED_EXPORTERS': {
-            'csv': 'scrapy.exporters.CsvItemExporter',
-        },
-    }
+    # custom_settings = {
+    #     'FEEDS': {
+    #         'get_emails.csv' : {
+    #             'format': 'csv',
+    #             'encoding': 'utf-8'
+    #         }
+    #     },
+    #     'FEED_EXPORTERS': {
+    #         'csv': 'scrapy.exporters.CsvItemExporter',
+    #     },
+    # }
 
     def __init__(self, use_db='', prt="", report_title='', use_csv='', user="", *args, **kwargs):
         self.logger.debug(f'user prt---------------------------------------------------------{user, prt}')
@@ -71,8 +71,10 @@ class GetEmailsSpider(scrapy.Spider):
             j.pop('_id')
             new_data.append(j)
         print()
-        print(new_data[:5], len(new_data))
+        print(new_data[:3], len(new_data))
         print()
+        self.client.close()
+        
 
 
         # use_db will be true when user uploads a CSV file while running this spider
@@ -100,25 +102,13 @@ class GetEmailsSpider(scrapy.Spider):
         else:
             print("ELSE ________________________")
             # Read the CSV file & fillup the self.urls list
-            # csv_data = pd.read_csv('guestpostscraper.out.csv')
             csv_data = new_data
-            print()
-            print("TYPE OF CSV ", type(csv_data))
-            print()
-            # print("Getting guestpostscraper -----------------------------------")
             for each in csv_data:
-                print()
-                # print("EACH ", each, type(each))
-                print()
                 website_url = each['website_url'].strip()
                 category = each['category'].strip()
-                # report_title = each['report_title'].strip()
                 report = self.REPORT_TITLE.strip()
                 user = each['user'].strip()
-
                 # print("HERE IS THE DATA ", website_url, category, report, user)
-                print()
-
                 self.urls.append(
                     {
                         'url': website_url,
@@ -128,10 +118,7 @@ class GetEmailsSpider(scrapy.Spider):
                     }
                 )
 
-
-        # print()
-        # print()
-        print("Self urls ----------------------self urls -------------------------", len(self.urls))
+        print("Self urls ----------------------self urls -------------------------", len(self.urls), self.urls[:5])
         # print()
         # print()
 
@@ -173,50 +160,50 @@ class GetEmailsSpider(scrapy.Spider):
     
 
     def start_requests(self):
-        # Access each URL in the self.urls list
         for url in self.urls:
-            # print("CHECkING - ", url['url'])
-
-            if self.is_db_data_outdated(url['url']):
-                domain = url['url'].split('/')[2].replace('www.', '')
-                yield Request(
-                    url['url'],
-                    callback=self.parse,
-                    headers=self.headers,
-                    meta={
-                        # 'dont_proxy': True,
-                        'domain': domain,
-                        'category': url['category'],
-                        'report_title': url['report_title'],
-                        'user': url['user']
-                    }
-                )
+            # if self.is_db_data_outdated(url['url']):
+            domain = url['url'].split('/')[2].replace('www.', '')
+            yield Request(
+                url['url'],
+                callback=self.parse,
+                headers=self.headers,
+                meta={
+                    # 'dont_proxy': True,
+                    'domain': domain,
+                    'category': url['category'],
+                    'report_title': url['report_title'],
+                    'user': url['user']
+                }
+            )
 
             # Check if the current url is last of the list
             # If yes then close the DB connection.
             if (len(self.urls) - 1) == self.urls.index(url):
-                self.logger.debug('DEBUG: Last URL of the list. Closing DB connection.')
-                self.client.close()
+                # self.logger.debug('DEBUG: Last URL of the list. Closing DB connection.')
+                # self.client.close()
                 print("------------------connection closed---------------------")
 
 
-    def is_db_data_outdated(self, url):
-        # data = self.db.emails.find_one({"url": url}, {'_id': 0, 'date': 1})
-        data = self.db.get_email.find_one({"url": url}, {'_id': 0, 'date': 1})
-        if data:
-            today = datetime.datetime.today()
-            db_date = datetime.datetime.strptime(data['date'], "%Y-%m-%d")
-            delta = today - db_date
-            self.logger.debug(f'DEBUG: Db data is ------------------------------------------------ {delta.days} days old')
-            if delta.days > 30:
-                self.logger.debug(f'DEBUG: Re-fetching from data web ------------------------------------------------')
-                return True
-            else:
-                self.logger.debug(f'DEBUG: Skipping ------------------------------------------------ data fetch from web')
-                return False
-        else:
-            self.logger.debug(f'DEBUG: No data found in db. ------------------------------------------------ Fetching from web')
-            return True
+    # def is_db_data_outdated(self, url):
+    #     # data = self.db.emails.find_one({"url": url}, {'_id': 0, 'date': 1})
+    #     data = self.db.get_email.find_one({"url": url}, {'_id': 0, 'date': 1})
+    #     print()
+    #     print("DATA FROM CHECKING ooutdated or not  ", data)
+    #     print()
+    #     if data:
+    #         today = datetime.datetime.today()
+    #         db_date = datetime.datetime.strptime(data['date'], "%Y-%m-%d")
+    #         delta = today - db_date
+    #         self.logger.debug(f'DEBUG: Db data is ------------------------------------------------ {delta.days} days old')
+    #         if delta.days > 30:
+    #             self.logger.debug(f'DEBUG: Re-fetching from data web ------------------------------------------------')
+    #             return True
+    #         else:
+    #             self.logger.debug(f'DEBUG: Skipping ------------------------------------------------ data fetch from web')
+    #             return False
+    #     else:
+    #         self.logger.debug(f'DEBUG: No data found in db. ------------------------------------------------ Fetching from web')
+    #         return True
 
 
 
@@ -299,7 +286,6 @@ class GetEmailsSpider(scrapy.Spider):
                     'url': response.url,
                     'category': response.meta['category'],
                     'report_title': response.meta['report_title'],
-                    # response.meta['domain']
                     'user': response.meta['user'],
                     'domain': domain,   
                     'email': unique_emails[0] if unique_emails else 'NA',
