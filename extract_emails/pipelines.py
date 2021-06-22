@@ -18,7 +18,7 @@ class ExtractEmailsPipeline(object):
         #         os.remove('guestpostscraper.csv')
             # self.collection_name = 'scraper_db'
         # self.client = pymongo.MongoClient("mongodb+srv://nayeem:imunbd990@cluster0.vh1iq.mongodb.net/bloggerhit?retryWrites=true&w=majority")
-        self.client = pymongo.MongoClient("mongodb+srv://admin-santhej:2&fX#zF9JzG$@cluster0.3dv1a.mongodb.net/myFirstDatabase?retryWrites=true&w=majority")
+        self.client = pymongo.MongoClient("mongodb+srv://admin-santhej:2&fX#zF9JzG$@cluster0.3dv1a.mongodb.net/bloggerhit?retryWrites=true&w=majority")
 
        
 
@@ -52,6 +52,8 @@ class ExtractEmailsPipeline(object):
             else:
                 print(f'ERROR: Skipping db insertion because no email was not found for {item["website"]}')
 
+        # if the spider is guestpostscraper then insert to gostpostscraper mongodb
+        # if the spider is guestpostscraper then insert to gostpostscraper mongodb
         # if the spider is guestpostscraper then insert to gostpostscraper mongodb
         else:
             print()

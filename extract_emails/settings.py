@@ -11,7 +11,7 @@ ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 # this one is added new
-CONCURRENT_REQUESTS = 128
+CONCURRENT_REQUESTS = 256
 
 # Configure a delay for requests for the same website (default: 0)
 # See https://doc.scrapy.org/en/latest/topics/settings.html#download-delay
@@ -91,22 +91,22 @@ HTTPERROR_ALLOW_ALL = True
 CRAWLERA_ENABLED = True
 CRAWLERA_APIKEY = '6fb5e1784f5846af94c3f7c9cfaef420'
 CONCURRENT_REQUESTS_PER_DOMAIN = 32
-DOWNLOAD_DELAY = .5
+# DOWNLOAD_DELAY = .5
 # AUTOTHROTTLE_ENABLED = True
 # CRAWLERA_PRESERVE_DELAY = True
 
-RETRY_ENABLED = True
-RETRY_TIMES = 2
+RETRY_ENABLED = False
+# RETRY_TIMES = 2
 RETRY_HTTP_CODES = [500, 502, 503, 504, 522, 524, 408, 429]
 
 # DUPEFILTER_DEBUG = True
 SCHEDULER_PRIORITY_QUEUE = 'scrapy.pqueues.DownloaderAwarePriorityQueue'
 REACTOR_THREADPOOL_MAXSIZE = 300
 LOG_LEVEL = 'INFO'
-DOWNLOAD_TIMEOUT = 10
+# DOWNLOAD_TIMEOUT = 10
 DOWNLOAD_MAXSIZE = 10000000
 DOWNLOAD_FAIL_ON_DATALOSS = False
-COOKIES_ENABLED = False
+# COOKIES_ENABLED = False
 REDIRECT_ENABLED = False
 
 
