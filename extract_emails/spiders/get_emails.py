@@ -45,7 +45,7 @@ class GetEmailsSpider(scrapy.Spider):
         },
     }
 
-    def __init__(self, use_db='', report_title='', use_csv='', user="", *args, **kwargs):
+    def __init__(self, use_db='', prt="", report_title='', use_csv='', user="", *args, **kwargs):
         # self.logger.debug(f'use_db---------------------------------------------------------{use_db}')
         self.logger.debug(f'report_title---------------------------------------------------------{report_title}')
         self.logger.debug(f'use_csv---------------------------------------------------------{use_csv}')
@@ -54,8 +54,24 @@ class GetEmailsSpider(scrapy.Spider):
         self.REPORT_TITLE = report_title
 
         # PRODUCTION ENV DB
-        self.client = pymongo.MongoClient("mongodb+srv://nayeem:imunbd990@cluster0.vh1iq.mongodb.net/bloggerhit?retryWrites=true&w=majority")
+        # self.client = pymongo.MongoClient("mongodb+srv://nayeem:imunbd990@cluster0.vh1iq.mongodb.net/bloggerhit?retryWrites=true&w=majority")
+        self.client = pymongo.MongoClient("mongodb+srv://admin-santhej:2&fX#zF9JzG$@cluster0.3dv1a.mongodb.net/myFirstDatabase?retryWrites=true&w=majority")
         self.db = self.client[str(user)]
+        self.db[str(prt)]
+
+        collections = self.db[str(prt)]
+        allrawdata = collections.find({})
+        xx = []
+        for i in allrawdata:
+            xx.append(i)
+        print()
+
+        new_data = []
+        for j in xx:
+            j.pop('_id')
+            new_data.append(j)
+        print(new_data[:10], len(new_data))
+
 
         # use_db will be true when user uploads a CSV file while running this spider
         # or choose to run both the spiders together
@@ -82,7 +98,8 @@ class GetEmailsSpider(scrapy.Spider):
         else:
             print("ELSE ________________________")
             # Read the CSV file & fillup the self.urls list
-            csv_data = pd.read_csv('guestpostscraper.out.csv')
+            # csv_data = pd.read_csv('guestpostscraper.out.csv')
+            csv_data = new_data
             # print("Getting guestpostscraper -----------------------------------")
             for website_url, category, user in csv_data[['website_url', 'category', 'user']].values:
                 self.urls.append(
@@ -96,7 +113,7 @@ class GetEmailsSpider(scrapy.Spider):
 
         # print()
         # print()
-        print("Self urls ----------------------self urls -------------------------", len(self.urls))
+        print("Self urls ----------------------self urls -------------------------", len(self.urls), self.urls)
         # print()
         # print()
 
