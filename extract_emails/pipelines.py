@@ -18,16 +18,18 @@ class ExtractEmailsPipeline(object):
         #         os.remove('guestpostscraper.csv')
             # self.collection_name = 'scraper_db'
         # self.client = pymongo.MongoClient("mongodb+srv://nayeem:imunbd990@cluster0.vh1iq.mongodb.net/bloggerhit?retryWrites=true&w=majority")
-        self.client = pymongo.MongoClient("mongodb+srv://admin-santhej:2&fX#zF9JzG$@cluster0.3dv1a.mongodb.net/bloggerhit?retryWrites=true&w=majority")
+        self.client = pymongo.MongoClient("mongodb+srv://admin-santhej:2&fX#zF9JzG$@cluster0.3dv1a.mongodb.net/scraper_db?retryWrites=true&w=majority")
+                                         # mongodb+srv://admin-santhej:2&fX#zF9JzG$@cluster0.3dv1a.mongodb.net/myFirstDatabase?retryWrites=true&w=majority
+
 
        
 
     def process_item(self, item, spider):
-        self.db = self.client[item["user"]]
+        self.db = self.client[str(item["user"])]
         print()
         print()
         print()
-        print("THIS IS THE item ", item)
+        print("THIS IS THE item ", item, self.db)
         print()
         print()
         print()
@@ -59,7 +61,7 @@ class ExtractEmailsPipeline(object):
             print()
             print(f'guestpostscraper bb Insert -> {item}')
             print()
-            self.db[item["report_title"]].update_one(
+            self.db[str(item["report_title"])].update_one(
                 {"website_url": item["website_url"]}, {"$set": item}, upsert=True
             )
         return item
